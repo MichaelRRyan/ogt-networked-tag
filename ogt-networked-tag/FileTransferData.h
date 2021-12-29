@@ -13,6 +13,7 @@ struct FileTransferData
 	int m_bytesWritten; //For when receiving files
 	int m_fileOffset; //For when reading a file
 	int m_fileSize; //For when reading a file
+	int m_remainingBytes; //For when reading a file
 	std::ifstream m_infileStream; //For reading a file that is being sent
 	std::ofstream m_outfileStream; //For writing a file that is being received
 	bool m_transferInProgress = false;

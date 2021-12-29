@@ -215,6 +215,7 @@ void Server::PacketSenderThread(Server & server) //Thread for all outgoing packe
 	{
 		if (server.m_terminateThreads == true)
 			break;
+
 		std::shared_lock<std::shared_mutex> lock(server.m_mutex_connectionMgr);
 		for (auto conn : server.m_connections) //for each connection...
 		{
