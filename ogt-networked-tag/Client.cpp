@@ -65,6 +65,17 @@ bool Client::ProcessPacketType(PacketType packetType)
 {
 	switch (packetType)
 	{
+	case PacketType::PlayerPosition: //If PacketType is a chat message PlayerPosition
+	{
+		std::string Message; //string to store our message we received
+		if (!GetString(Message)) //Get the chat message and store it in variable: Message
+			return false; //If we do not properly get the chat message, return false
+		
+		if (Message.size() == 3)
+			m_playerPositions[Message.at(0)] = { Message.at(1), Message.at(2) };
+
+		break;
+	}
 	case PacketType::ChatMessage: //If PacketType is a chat message PacketType
 	{
 		std::string Message; //string to store our message we received
@@ -226,8 +237,11 @@ bool Client::GetPacketType(PacketType& packetType)
 
 void Client::SendString(const std::string& str)
 {
-	PS::ChatMessage cm(str);
-	m_pm.Append(cm.toPacket());
+	std::shared_ptr<Packet> p = std::make_shared<Packet>();
+	p->Append(PacketType::PlayerPosition);
+	p->Append(str.size());
+	p->Append(str);
+	m_pm.Append(p);
 }
 
 bool Client::GetString(std::string& str)

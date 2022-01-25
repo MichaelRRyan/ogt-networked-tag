@@ -4,6 +4,9 @@
 #include "FileTransferData.h" //For FileTransferData class
 #include "PacketManager.h" //For PacketManager class
 
+// TEMPORARY.
+#include <map>
+
 class Client
 {
 public: //Public functions
@@ -13,6 +16,9 @@ public: //Public functions
 	void SendString(const std::string & str);
 	bool RequestFile(const std::string & fileName);
 	~Client();
+
+	std::map<char, std::pair<char, char>> m_playerPositions;
+
 private: //Private functions
 	bool CloseConnection();
 	bool ProcessPacketType(const PacketType packetType);
@@ -35,4 +41,5 @@ private: //Private variables
 
 	std::thread m_pst; //Create thread to send packets
 	std::thread m_ct; //Create thread to listen to server
+
 };

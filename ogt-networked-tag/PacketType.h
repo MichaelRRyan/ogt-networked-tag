@@ -3,6 +3,7 @@
 
 enum class PacketType
 {
+	PlayerPosition,
 	ChatMessage,
 	FileTransferRequestFile, //Sent to request a file
 	FileTransfer_EndOfFile, //Sent for when file transfer is complete

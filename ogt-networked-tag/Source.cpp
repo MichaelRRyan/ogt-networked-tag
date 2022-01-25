@@ -34,8 +34,39 @@ int main()
 		std::string userinput; //holds the user's chat message
 		while (true)
 		{
-			std::getline(std::cin, userinput); //Get line if user presses enter and fill the buffer
-			myClient.SendString(userinput); //Send string to server
+			system("cls");
+			for (int y = 0; y < 10; ++y)
+			{
+				for (int x = 0; x < 10; ++x)
+				{
+
+					bool drawn = false;
+
+					for (auto& pair : myClient.m_playerPositions)
+					{
+						if (pair.second.first == x && pair.second.second == y)
+						{
+							std::cout << " " << (int)pair.first;
+							drawn = true;
+						}
+					}
+
+					if (!drawn)
+						std::cout << " -";
+				}
+
+				std::cout << std::endl;
+			}
+
+			//std::getline(std::cin, userinput); // Get line if user presses enter and fill the buffer
+			int x = 0;
+			int y = 0;
+			std::cin >> x;
+			std::cin >> y;
+			std::string message{ " " };
+			message += static_cast<char>(x);
+			message += static_cast<char>(y);
+			myClient.SendString(message); // Send string to server
 		}
 
 		std::cin.get();
