@@ -33,12 +33,12 @@ public:
 
 	Server(int port, bool loopBacktoLocalHost = true);
 	~Server();
-	bool ListenForNewConnection();
 
 private:
 
 	bool ProcessPacket(std::shared_ptr<Connection> connection, PacketType packetType);
 
+	static void NewConnectionThread(Server& server);
 	static void ClientHandlerThread(Server & server, std::shared_ptr<Connection> connection);
 	static void PacketSenderThread(Server & server); 
 	void DisconnectClient(std::shared_ptr<Connection> connection); //Called to properly disconnect and clean up a client (if possible)

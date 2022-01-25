@@ -40,6 +40,10 @@ Server::Server(int port, bool loopBacktoLocalHost) //Port = port to broadcast on
 	std::thread PST(PacketSenderThread, std::ref(*this));
 	PST.detach();
 	m_threads.push_back(&PST);
+
+	std::thread LFNCT(NewConnectionThread, std::ref(*this));
+	LFNCT.detach();
+	m_threads.push_back(&LFNCT);
 }
 
 Server::~Server()
@@ -51,26 +55,25 @@ Server::~Server()
 	}
 }
 
-bool Server::ListenForNewConnection()
+void Server::NewConnectionThread(Server & server)
 {
 	int addrlen = sizeof(m_addr);
-	SOCKET newConnectionSocket = accept(m_sListen, (SOCKADDR*)&m_addr, &addrlen); //Accept a new connection
+	SOCKET newConnectionSocket = accept(server.m_sListen, (SOCKADDR*)&server.m_addr, &addrlen); //Accept a new connection
 	if (newConnectionSocket == 0) //If accepting the client connection failed
 	{
 		std::cout << "Failed to accept the client's connection." << std::endl;
-		return false;
 	}
 	else //If client connection properly accepted
 	{
-		std::lock_guard<std::shared_mutex> lock(m_mutex_connectionMgr); //Lock connection manager mutex since we are adding an element to connection vector
+		std::lock_guard<std::shared_mutex> lock(server.m_mutex_connectionMgr); //Lock connection manager mutex since we are adding an element to connection vector
 		std::shared_ptr<Connection> newConnection(std::make_shared<Connection>(newConnectionSocket));
-		m_connections.push_back(newConnection); //push new connection into vector of connections
-		newConnection->m_ID = m_IDCounter; //Set ID for this connection
-		m_IDCounter += 1; //Increment ID Counter...
+		server.m_connections.push_back(newConnection); //push new connection into vector of connections
+		newConnection->m_ID = server.m_IDCounter; //Set ID for this connection
+		server.m_IDCounter += 1; //Increment ID Counter...
 		std::cout << "Client Connected! ID:" << newConnection->m_ID << std::endl;
-		std::thread CHT(ClientHandlerThread, std::ref(*this), newConnection);
+		std::thread CHT(ClientHandlerThread, std::ref(server), newConnection);
 		CHT.detach();
-		m_threads.push_back(&CHT);
+		server.m_threads.push_back(&CHT);
 
 		// Sends the new client their ID.
 		std::string info = "" + (char)newConnection->m_ID;
@@ -80,8 +83,6 @@ bool Server::ListenForNewConnection()
 		p->Append(info);
 
 		newConnection->m_pm.Append(p);
-
-		return true;
 	}
 }
 

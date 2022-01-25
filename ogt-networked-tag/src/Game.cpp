@@ -106,7 +106,7 @@ void Game::updateNetworking()
 	if (m_server)
 	{
 		// Accepts a new connection (if someones trying to connect).
-		m_server->ListenForNewConnection();
+		//m_server->ListenForNewConnection();
 	}
 
 	if (m_client)
