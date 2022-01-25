@@ -2,7 +2,8 @@
 
 Game::Game() :
 	m_window{ sf::VideoMode{ WINDOW_WIDTH, WINDOW_HEIGHT, 32u }, "OGT Game" },
-	m_exitGame{ false }
+	m_exitGame{ false },
+	m_localId{ 100 }
 {
 	if (!m_terrainTexture.loadFromFile("ASSETS\\IMAGES\\terrain_atlas.png"))
 	{
@@ -22,6 +23,8 @@ Game::Game() :
 
 Game::~Game()
 {
+	if (m_server) delete m_server;
+	if (m_client) delete m_client;
 }
 
 void Game::run()
@@ -46,6 +49,29 @@ void Game::run()
 
 }
 
+void Game::startServer()
+{
+	// Creates a server on port 1111, false=do not loopback to localhost (others can connect).
+	m_server = new Server(1111, false);
+}
+
+bool Game::startClient(std::string const& t_ip)
+{
+	// Create client to connect to a server on port 1111.
+	m_client = new Client(t_ip.c_str(), 1111);
+
+	m_client->setInitInfoCallback([&](char id)
+		{ initInfoRecieved(id); });
+
+	m_client->setPlayerPositionCallback([&](char id, char x, char y)
+		{ playerPositionRecieved(id, x, y); });
+
+	if (!m_client->Connect()) //If client fails to connect...
+		return false;
+
+	return true;
+}
+
 void Game::processEvents()
 {
 	sf::Event nextEvent;
@@ -55,14 +81,41 @@ void Game::processEvents()
 		{
 			m_window.close();
 		}
+		else if (sf::Event::KeyPressed == nextEvent.type)
+		{
+			// If an id has been set.
+			if (m_localId != 100)
+			{
+				sf::Vector2f pos = m_playerPositions[m_localId];
+				m_client->sendPlayerPosition(((int)pos.x) / TILE_SIZE + 1, ((int)pos.y) / TILE_SIZE);
+			}
+		}
 	}
 }
 
 void Game::update(sf::Time t_deltaTime)
 {
 	if (m_exitGame)
-	{
 		m_window.close();
+
+	updateNetworking();
+}
+
+void Game::updateNetworking()
+{
+	if (m_server)
+	{
+		// Accepts a new connection (if someones trying to connect).
+		m_server->ListenForNewConnection();
+	}
+
+	if (m_client)
+	{
+		int x = 0;
+		int y = 0;
+		std::cin >> x;
+		std::cin >> y;
+		m_client->sendPlayerPosition(x, y);
 	}
 }
 
@@ -157,6 +210,14 @@ void Game::drawGameplay()
 		}
 	}
 
+	// Draws placeholder players at their positions.
+	for (auto & player : m_playerPositions)
+	{
+		m_tileSprite.setPosition(player.second);
+		m_tileSprite.setTextureRect({ 320, 448, 32, 32 });
+		m_window.draw(m_tileSprite);
+	}
+
 	m_hudIcons.setTextureRect({ 64, 0, 288, 32 });
 	m_hudIcons.setPosition(256.0f, 0.0f);
 	m_window.draw(m_hudIcons);
@@ -171,4 +232,16 @@ void Game::drawGameplay()
 
 	m_window.draw(m_scoreText);
 	m_window.draw(m_livesText);
+}
+
+void Game::initInfoRecieved(char t_id)
+{
+	m_playerPositions[t_id] = sf::Vector2f{ 0.0f, 0.0f };
+	m_localId = t_id;
+}
+
+void Game::playerPositionRecieved(char t_id, char t_x, char t_y)
+{
+	m_playerPositions[t_id] = sf::Vector2f{ 
+		static_cast<float>(t_x) * TILE_SIZE, static_cast<float>(t_y) * TILE_SIZE };
 }

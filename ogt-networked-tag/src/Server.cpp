@@ -71,6 +71,16 @@ bool Server::ListenForNewConnection()
 		std::thread CHT(ClientHandlerThread, std::ref(*this), newConnection);
 		CHT.detach();
 		m_threads.push_back(&CHT);
+
+		// Sends the new client their ID.
+		std::string info = "" + (char)newConnection->m_ID;
+		std::shared_ptr<Packet> p = std::make_shared<Packet>();
+		p->Append(PacketType::InitInfo);
+		p->Append(info.size());
+		p->Append(info);
+
+		newConnection->m_pm.Append(p);
+
 		return true;
 	}
 }

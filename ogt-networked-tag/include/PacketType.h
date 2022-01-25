@@ -3,6 +3,7 @@
 
 enum class PacketType
 {
+	InitInfo,
 	PlayerPosition,
 	ChatMessage,
 	FileTransferRequestFile, //Sent to request a file

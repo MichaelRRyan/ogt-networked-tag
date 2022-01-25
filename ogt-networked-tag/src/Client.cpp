@@ -65,14 +65,25 @@ bool Client::ProcessPacketType(PacketType packetType)
 {
 	switch (packetType)
 	{
-	case PacketType::PlayerPosition: //If PacketType is a chat message PlayerPosition
+	case PacketType::InitInfo: //If PacketType is an InitInfo
+	{
+		std::string Message; //string to store our message we received
+		if (!getString(m_connection, Message)) //Get the chat message and store it in variable: Message
+			return false; //If we do not properly get the chat message, return false
+
+		if (Message.size() == 1)
+			m_initInfoCallback(Message.at(0));
+
+		break;
+	}
+	case PacketType::PlayerPosition: //If PacketType is a PlayerPosition
 	{
 		std::string Message; //string to store our message we received
 		if (!getString(m_connection, Message)) //Get the chat message and store it in variable: Message
 			return false; //If we do not properly get the chat message, return false
 		
 		if (Message.size() == 3)
-			m_playerPositions[Message.at(0)] = { Message.at(1), Message.at(2) };
+			m_playerPositionCallback(Message.at(0), Message.at(1), Message.at(2));
 
 		break;
 	}
@@ -171,6 +182,16 @@ void Client::sendPlayerPosition(int t_x, int t_y)
 	message += static_cast<char>(t_x);
 	message += static_cast<char>(t_y);
 	sendString(m_pm, PacketType::PlayerPosition, message);
+}
+
+void Client::setPlayerPositionCallback(PlayerPositionCallback t_callback)
+{
+	m_playerPositionCallback = t_callback;
+}
+
+void Client::setInitInfoCallback(InitInfoCallback t_callback)
+{
+	m_initInfoCallback = t_callback;
 }
 
 void Client::PacketSenderThread(Client & client) //Thread for all outgoing packets

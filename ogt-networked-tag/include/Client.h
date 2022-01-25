@@ -1,24 +1,27 @@
 #pragma once
 #include <WinSock2.h> //For SOCKET
 #include <string> //For std::string
+#include <functional>
+
 #include "FileTransferData.h" //For FileTransferData class
 #include "PacketManager.h" //For PacketManager class
 #include "Network.h"
 
-// TEMPORARY.
-#include <map>
-
 class Client : public Network
 {
 public: //Public functions
+
+	using PlayerPositionCallback = std::function<void(char, char, char)>;
+	using InitInfoCallback = std::function<void(char)>;
+
 	Client(const char * ip, const int port);
 	bool Connect();
 	void Disconnect();
 	bool RequestFile(const std::string & fileName);
 	void sendPlayerPosition(int t_x, int t_y);
+	void setPlayerPositionCallback(PlayerPositionCallback t_callback);
+	void setInitInfoCallback(InitInfoCallback t_callback);
 	~Client();
-
-	std::map<char, std::pair<char, char>> m_playerPositions;
 
 private: //Private functions
 
@@ -37,5 +40,8 @@ private: //Private variables
 
 	std::thread m_pst; //Create thread to send packets
 	std::thread m_ct; //Create thread to listen to server
+
+	PlayerPositionCallback m_playerPositionCallback;
+	InitInfoCallback m_initInfoCallback;
 
 };
