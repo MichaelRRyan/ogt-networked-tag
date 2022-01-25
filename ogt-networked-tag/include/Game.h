@@ -6,6 +6,10 @@
 #include "Globals.h"
 #include "Cell.h"
 
+#include "Server.h"
+#include "Client.h"
+
+
 class Game
 {
 public:
@@ -36,7 +40,6 @@ private:
 	sf::Text m_livesText; // Text for player lives
 	sf::Sprite m_tileSprite; // sprite for each tile
 	sf::Sprite m_hudIcons; // Icons for the player's hud
-
 
 	Cell m_maze[MAX_ROWS][MAX_COLS];
 };

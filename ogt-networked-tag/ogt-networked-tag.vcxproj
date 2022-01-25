@@ -141,29 +141,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Client.cpp" />
-    <ClCompile Include="FileTransferData.cpp" />
-    <ClCompile Include="Network.cpp" />
-    <ClCompile Include="Packet.cpp" />
-    <ClCompile Include="PacketManager.cpp" />
-    <ClCompile Include="PacketStructs.cpp" />
-    <ClCompile Include="Server.cpp" />
-    <ClCompile Include="Source.cpp" />
     <ClCompile Include="src\Cell.cpp" />
+    <ClCompile Include="src\Client.cpp" />
+    <ClCompile Include="src\FileTransferData.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Network.cpp" />
+    <ClCompile Include="src\Packet.cpp" />
+    <ClCompile Include="src\PacketManager.cpp" />
+    <ClCompile Include="src\PacketStructs.cpp" />
+    <ClCompile Include="src\Server.cpp" />
+    <ClCompile Include="src\Source.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Client.h" />
-    <ClInclude Include="FileTransferData.h" />
-    <ClInclude Include="Network.h" />
     <ClInclude Include="include\Cell.h" />
+    <ClInclude Include="include\Client.h" />
+    <ClInclude Include="include\FileTransferData.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Globals.h" />
-    <ClInclude Include="Packet.h" />
-    <ClInclude Include="PacketManager.h" />
-    <ClInclude Include="PacketStructs.h" />
-    <ClInclude Include="PacketType.h" />
-    <ClInclude Include="Server.h" />
+    <ClInclude Include="include\Network.h" />
+    <ClInclude Include="include\Packet.h" />
+    <ClInclude Include="include\PacketManager.h" />
+    <ClInclude Include="include\PacketStructs.h" />
+    <ClInclude Include="include\PacketType.h" />
+    <ClInclude Include="include\Server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
