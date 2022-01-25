@@ -75,65 +75,6 @@ bool Server::ListenForNewConnection()
 	}
 }
 
-bool Server::sendall(std::shared_ptr<Connection> connection, const char* data, const int totalBytes)
-{
-	int bytesSent = 0; //Holds the total bytes sent
-	while (bytesSent < totalBytes) //While we still have more bytes to send
-	{
-		int retnCheck = send(connection->m_socket, data + bytesSent, totalBytes - bytesSent, 0); //Try to send remaining bytes
-		if (retnCheck == SOCKET_ERROR) //If there is a socket error while trying to send bytes
-			return false; //Return false - failed to sendall
-		bytesSent += retnCheck; //Add to total bytes sent
-	}
-	return true; //Success!
-}
-
-bool Server::recvall(std::shared_ptr<Connection> connection, char* data, int totalbytes)
-{
-	int bytesReceived = 0; //Holds the total bytes received
-	while (bytesReceived < totalbytes) //While we still have more bytes to recv
-	{
-		int retnCheck = recv(connection->m_socket, data + bytesReceived, totalbytes - bytesReceived, 0); //Try to recv remaining bytes
-		if (retnCheck == SOCKET_ERROR || retnCheck == 0) //If there is a socket error while trying to recv bytes or if connection lost
-			return false; //Return false - failed to recvall
-		bytesReceived += retnCheck; //Add to total bytes received
-	}
-	return true; //Success!
-}
-
-bool Server::Getint32_t(std::shared_ptr<Connection> connection, std::int32_t& int32_t)
-{
-	if (!recvall(connection, (char*)&int32_t, sizeof(std::int32_t))) //Try to receive long (4 byte int)... If int fails to be recv'd
-		return false; //Return false: Int not successfully received
-	int32_t = ntohl(int32_t); //Convert long from Network Byte Order to Host Byte Order
-	return true;//Return true if we were successful in retrieving the int
-}
-
-bool Server::GetPacketType(std::shared_ptr<Connection> connection, PacketType& packetType)
-{
-	std::int32_t packettype_int;
-	if (!Getint32_t(connection, packettype_int)) //Try to receive packet type... If packet type fails to be recv'd
-		return false; //Return false: packet type not successfully received
-	packetType = (PacketType)packettype_int;
-	return true;//Return true if we were successful in retrieving the packet type
-}
-
-void Server::SendString(std::shared_ptr<Connection> connection, const std::string& str)
-{
-	PS::ChatMessage message(str);
-	connection->m_pm.Append(message.toPacket());
-}
-
-bool Server::GetString(std::shared_ptr<Connection> connection, std::string& str)
-{
-	std::int32_t bufferlength; //Holds length of the message
-	if (!Getint32_t(connection, bufferlength)) //Get length of buffer and store it in variable: bufferlength
-		return false; //If get int fails, return false
-	if (bufferlength == 0) return true;
-	str.resize(bufferlength); //resize string to fit message
-	return recvall(connection, &str[0], bufferlength);
-}
-
 bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType packetType)
 {
 	switch (packetType)
@@ -141,7 +82,7 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 	case PacketType::PlayerPosition: //Packet Type: Player Position
 	{
 		std::string message; //string to store our message we received
-		if (!GetString(connection, message)) //Get the chat message and store it in variable: Message
+		if (!getString(connection->m_socket, message)) //Get the chat message and store it in variable: Message
 			return false; //If we do not properly get the chat message, return false
 						  //Next we need to send the message out to each user
 
@@ -167,7 +108,7 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 	case PacketType::ChatMessage: //Packet Type: chat message
 	{
 		std::string message; //string to store our message we received
-		if (!GetString(connection, message)) //Get the chat message and store it in variable: Message
+		if (!getString(connection->m_socket, message)) //Get the chat message and store it in variable: Message
 			return false; //If we do not properly get the chat message, return false
 						  //Next we need to send the message out to each user
 
@@ -188,7 +129,7 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 	case PacketType::FileTransferRequestFile:
 	{
 		std::string fileName; //string to store file name
-		if (!GetString(connection, fileName)) //If issue getting file name
+		if (!getString(connection->m_socket, fileName)) //If issue getting file name
 			return false; //Failure to process packet
 		std::string errMsg;
 		if (connection->m_file.Initialize(fileName, errMsg)) //if filetransferdata successfully initialized
@@ -197,7 +138,7 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 		}
 		else //If initialization failed, send error message
 		{
-			SendString(connection, errMsg);
+			sendString(connection->m_pm, PacketType::ChatMessage, errMsg);
 		}
 		break;
 	}
@@ -225,7 +166,7 @@ void Server::ClientHandlerThread(Server & server, std::shared_ptr<Connection> co
 	{
 		if (server.m_terminateThreads == true)
 			break;
-		if (!server.GetPacketType(connection, packettype)) //Get packet type
+		if (!server.getPacketType(connection->m_socket, packettype)) //Get packet type
 			break; //If there is an issue getting the packet type, exit this loop
 		if (!server.ProcessPacket(connection, packettype)) //Process packet (packet type)
 			break; //If there is an issue processing the packet, exit this loop
@@ -248,7 +189,7 @@ void Server::PacketSenderThread(Server & server) //Thread for all outgoing packe
 			if (conn->m_pm.HasPendingPackets()) //If there are pending packets for this connection's packet manager
 			{
 				std::shared_ptr<Packet> p = conn->m_pm.Retrieve(); //Retrieve packet from packet manager
-				if (!server.sendall(conn, (const char*)(&p->m_buffer[0]), p->m_buffer.size())) //send packet to connection
+				if (!server.sendAll(conn->m_socket, (const char*)(&p->m_buffer[0]), p->m_buffer.size())) //send packet to connection
 				{
 					std::cout << "Failed to send packet to ID: " << conn->m_ID << std::endl; //Print out if failed to send packet
 				}

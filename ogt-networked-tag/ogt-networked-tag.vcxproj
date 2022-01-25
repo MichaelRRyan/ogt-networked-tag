@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="FileTransferData.cpp" />
+    <ClCompile Include="Network.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="PacketManager.cpp" />
     <ClCompile Include="PacketStructs.cpp" />
@@ -150,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="Client.h" />
     <ClInclude Include="FileTransferData.h" />
+    <ClInclude Include="Network.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="PacketManager.h" />
     <ClInclude Include="PacketStructs.h" />

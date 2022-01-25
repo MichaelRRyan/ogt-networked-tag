@@ -68,7 +68,7 @@ bool Client::ProcessPacketType(PacketType packetType)
 	case PacketType::PlayerPosition: //If PacketType is a chat message PlayerPosition
 	{
 		std::string Message; //string to store our message we received
-		if (!GetString(Message)) //Get the chat message and store it in variable: Message
+		if (!getString(m_connection, Message)) //Get the chat message and store it in variable: Message
 			return false; //If we do not properly get the chat message, return false
 		
 		if (Message.size() == 3)
@@ -79,7 +79,7 @@ bool Client::ProcessPacketType(PacketType packetType)
 	case PacketType::ChatMessage: //If PacketType is a chat message PacketType
 	{
 		std::string Message; //string to store our message we received
-		if (!GetString(Message)) //Get the chat message and store it in variable: Message
+		if (!getString(m_connection, Message)) //Get the chat message and store it in variable: Message
 			return false; //If we do not properly get the chat message, return false
 		std::cout << Message << std::endl; //Display the message to the user
 		break;
@@ -87,11 +87,11 @@ bool Client::ProcessPacketType(PacketType packetType)
 	case PacketType::FileTransferByteBuffer:
 	{
 		std::int32_t buffersize; //buffer to hold size of buffer to write to file
-		if (!Getint32_t(buffersize)) //get size of buffer as integer
+		if (!getInt32_t(m_connection, buffersize)) //get size of buffer as integer
 			return false;
 		if (buffersize > FileTransferData::m_bufferSize) //If invalid buffer size (too large)
 			return false;
-		if (!recvall(m_file.m_buffer, buffersize)) //get buffer and store it in file.buffer
+		if (!recieveAll(m_connection, m_file.m_buffer, buffersize)) //get buffer and store it in file.buffer
 			return false;
 		m_file.m_outfileStream.write(m_file.m_buffer, buffersize); //write buffer from file.buffer to our outfilestream
 		m_file.m_bytesWritten += buffersize; //increment byteswritten
@@ -123,7 +123,7 @@ void Client::ClientThread(Client & client)
 	{
 		if (client.m_terminateThreads == true)
 			break;
-		if (!client.GetPacketType(PacketType)) //Get PacketType type
+		if (!client.getPacketType(client.m_connection, PacketType)) //Get PacketType type
 			break; //If there is an issue getting the PacketType type, exit this loop
 		if (!client.ProcessPacketType(PacketType)) //Process PacketType (PacketType type)
 			break; //If there is an issue processing the PacketType, exit this loop
@@ -165,6 +165,14 @@ bool Client::RequestFile(const std::string & fileName)
 	return true;
 }
 
+void Client::sendPlayerPosition(int t_x, int t_y)
+{
+	std::string message{ " " };
+	message += static_cast<char>(t_x);
+	message += static_cast<char>(t_y);
+	sendString(m_pm, PacketType::PlayerPosition, message);
+}
+
 void Client::PacketSenderThread(Client & client) //Thread for all outgoing packets
 {
 	while (true)
@@ -174,7 +182,7 @@ void Client::PacketSenderThread(Client & client) //Thread for all outgoing packe
 		while (client.m_pm.HasPendingPackets())
 		{
 			std::shared_ptr<Packet> p = client.m_pm.Retrieve();
-			if (!client.sendall((const char*)(&p->m_buffer[0]), p->m_buffer.size()))
+			if (!client.sendAll(client.m_connection, (const char*)(&p->m_buffer[0]), p->m_buffer.size()))
 			{
 				std::cout << "Failed to send packet to server..." << std::endl;
 				break;
@@ -190,66 +198,4 @@ void Client::Disconnect()
 	m_pm.Clear();
 	closesocket(m_connection);
 	std::cout << "Disconnected from server." << std::endl;
-}
-
-bool Client::recvall(char* data, int totalBytes)
-{
-	int bytesReceived = 0; //Holds the total bytes received
-	while (bytesReceived < totalBytes) //While we still have more bytes to recv
-	{
-		int RetnCheck = recv(m_connection, data + bytesReceived, totalBytes - bytesReceived, 0); //Try to recv remaining bytes
-		if (RetnCheck == SOCKET_ERROR || RetnCheck == 0) //If there is a socket error while trying to recv bytes or if connection is lost
-			return false; //Return false - failed to recvall
-		bytesReceived += RetnCheck; //Add to total bytes received
-	}
-	return true; //Success!
-}
-
-bool Client::sendall(const char* data, const int totalBytes)
-{
-	int bytesSent = 0; //Holds the total bytes sent
-	while (bytesSent < totalBytes) //While we still have more bytes to send
-	{
-		int RetnCheck = send(m_connection, data + bytesSent, totalBytes - bytesSent, 0); //Try to send remaining bytes
-		if (RetnCheck == SOCKET_ERROR) //If there is a socket error while trying to send bytes
-			return false; //Return false - failed to sendall
-		bytesSent += RetnCheck; //Add to total bytes sent
-	}
-	return true; //Success!
-}
-
-bool Client::Getint32_t(std::int32_t& int32_t)
-{
-	if (!recvall((char*)&int32_t, sizeof(std::int32_t))) //Try to receive int... If int fails to be recv'd
-		return false; //Return false: Int not successfully received
-	int32_t = ntohl(int32_t); //Convert long from Network Byte Order to Host Byte Order
-	return true;//Return true if we were successful in retrieving the int
-}
-
-bool Client::GetPacketType(PacketType& packetType)
-{
-	std::int32_t packetType_int;
-	if (!Getint32_t(packetType_int))//Try to receive PacketType type... If PacketType type fails to be recv'd
-		return false; //Return false: PacketType type not successfully received
-	packetType = (PacketType)packetType_int;
-	return true;//Return true if we were successful in retrieving the PacketType type
-}
-
-void Client::SendString(const std::string& str)
-{
-	std::shared_ptr<Packet> p = std::make_shared<Packet>();
-	p->Append(PacketType::PlayerPosition);
-	p->Append(str.size());
-	p->Append(str);
-	m_pm.Append(p);
-}
-
-bool Client::GetString(std::string& str)
-{
-	int32_t bufferlength; //Holds length of the message
-	if (!Getint32_t(bufferlength)) //Get length of buffer and store it in variable: bufferlength
-		return false; //If get int fails, return false
-	if (bufferlength == 0) return true;
-	str.resize(bufferlength); //resize string to fit message
-	return recvall(&str[0], bufferlength);
 }

@@ -63,10 +63,7 @@ int main()
 			int y = 0;
 			std::cin >> x;
 			std::cin >> y;
-			std::string message{ " " };
-			message += static_cast<char>(x);
-			message += static_cast<char>(y);
-			myClient.SendString(message); // Send string to server
+			myClient.sendPlayerPosition(x, y);
 		}
 
 		std::cin.get();

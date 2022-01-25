@@ -6,6 +6,7 @@
 #include <vector> // For std::vector
 #include <shared_mutex> // for shared_mutex
 
+#include "Network.h"
 #include "FileTransferData.h" // For FileTransferData class
 #include "PacketManager.h" // For PacketManager class
 
@@ -26,7 +27,7 @@ public:
 
 };
 
-class Server
+class Server : public Network
 {
 public:
 
@@ -35,13 +36,6 @@ public:
 	bool ListenForNewConnection();
 
 private:
-
-	bool sendall(std::shared_ptr<Connection> connection, const char * data, const int totalBytes);
-	bool recvall(std::shared_ptr<Connection> connection, char * data, int totalBytes);
-	bool Getint32_t(std::shared_ptr<Connection> connection, std::int32_t & int32_t);
-	bool GetPacketType(std::shared_ptr<Connection> connection, PacketType & packetType);
-	void SendString(std::shared_ptr<Connection> connection, const std::string & str);
-	bool GetString(std::shared_ptr<Connection> connection, std::string & str);
 
 	bool ProcessPacket(std::shared_ptr<Connection> connection, PacketType packetType);
 

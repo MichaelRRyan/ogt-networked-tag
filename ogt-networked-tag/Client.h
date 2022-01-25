@@ -3,34 +3,30 @@
 #include <string> //For std::string
 #include "FileTransferData.h" //For FileTransferData class
 #include "PacketManager.h" //For PacketManager class
+#include "Network.h"
 
 // TEMPORARY.
 #include <map>
 
-class Client
+class Client : public Network
 {
 public: //Public functions
 	Client(const char * ip, const int port);
 	bool Connect();
 	void Disconnect();
-	void SendString(const std::string & str);
 	bool RequestFile(const std::string & fileName);
+	void sendPlayerPosition(int t_x, int t_y);
 	~Client();
 
 	std::map<char, std::pair<char, char>> m_playerPositions;
 
 private: //Private functions
+
 	bool CloseConnection();
 	bool ProcessPacketType(const PacketType packetType);
 	static void ClientThread(Client & client); //Client thread which reads messages from server
 	static void PacketSenderThread(Client & client); //Packet sender thread which sends out packets existing in packet manager
-	//Sending Funcs
-	bool sendall(const char * data, const int totalBytes);
-	//Getting Funcs
-	bool recvall(char * data, const int totalBytes);
-	bool Getint32_t(std::int32_t & int32_t);
-	bool GetPacketType(PacketType & packetType);
-	bool GetString(std::string & str);
+
 private: //Private variables
 	bool m_terminateThreads = false;
 	bool m_isConnected = false;
