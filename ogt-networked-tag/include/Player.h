@@ -33,10 +33,9 @@ class Player : public sf::Drawable
 	sf::Text m_playerName;
 
 public:
-	Player(sf::Font);
+	Player();
 	void loadFiles();
 	void respawn();
-
 
 
 	virtual void draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const;

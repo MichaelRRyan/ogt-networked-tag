@@ -5,6 +5,7 @@
 #include <string>
 #include "Globals.h"
 #include "Cell.h"
+#include "Player.h"
 
 class Game
 {
@@ -39,6 +40,9 @@ private:
 
 
 	Cell m_maze[MAX_ROWS][MAX_COLS];
+
+	Player m_player;
+
 };
 
 #endif // !GAME

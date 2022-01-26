@@ -1,6 +1,6 @@
 #include "Player.h"
 
-Player::Player(sf::Font t_font) :
+Player::Player() :
 	m_characterPositions{
 { CHAR_SPACING * 5, CHAR_HEIGHT * 24 },
 { CHAR_SPACING * 5, CHAR_HEIGHT * 27},
@@ -13,8 +13,6 @@ Player::Player(sf::Font t_font) :
 { CHAR_SPACING * 1, CHAR_HEIGHT * 16},
 { CHAR_SPACING * 1, CHAR_HEIGHT * 30} }
 {
-	m_font = t_font;
-	m_playerName.setFont(m_font);
 
 	loadFiles();
 	respawn();
@@ -32,6 +30,13 @@ void Player::loadFiles()
 	m_body.setTexture(m_spriteSheet);
 	m_body.setTextureRect(sf::IntRect{ CHAR_SPACING * 2,0,CHAR_WIDTH,CHAR_HEIGHT });
 	m_body.setOrigin(0.0f, static_cast<float>(CHAR_WIDTH));
+
+	if (!m_font.loadFromFile("ASSETS\\FONTS\\twoson.ttf"))
+	{
+		// Error loading font file
+	}
+	m_playerName.setFont(m_font);
+	m_playerName.setCharacterSize(32);
 }
 
 void Player::respawn()
@@ -131,6 +136,8 @@ void Player::update(Cell t_maze[][MAX_COLS])
 		if (m_hurtTimer == 0)
 			m_body.setColor(sf::Color::White);
 	}
+
+	m_playerName.setPosition(sf::Vector2f(m_body.getPosition().x - 25, m_body.getPosition().y - 50));
 }
 
 void Player::movementInput(Cell t_maze[][MAX_COLS])
