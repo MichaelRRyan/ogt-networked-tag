@@ -86,8 +86,28 @@ void Game::processEvents()
 			// If an id has been set.
 			if (m_localId != 100)
 			{
-				sf::Vector2f pos = m_playerPositions[m_localId];
-				m_client->sendPlayerPosition(((int)pos.x) / TILE_SIZE + 1, ((int)pos.y) / TILE_SIZE);
+				sf::Vector2i pos = static_cast<sf::Vector2i>(m_playerPositions[m_localId] / (float)TILE_SIZE);
+				sf::Vector2i newPos = pos;
+
+				if (nextEvent.key.code == sf::Keyboard::Left)
+				{
+					newPos.x -= 1;
+				}
+				else if (nextEvent.key.code == sf::Keyboard::Right)
+				{
+					newPos.x += 1;
+				}
+
+				/*sf::Vector2f pos = m_playerPositions[m_localId];
+				m_client->sendPlayerPosition(((int)pos.x) / TILE_SIZE + 1, ((int)pos.y) / TILE_SIZE);*/
+
+				if (newPos != pos)
+				{
+					m_client->sendPlayerPosition(newPos.x, newPos.y);
+					m_playerPositions[m_localId] = sf::Vector2f{
+						static_cast<float>(newPos.x) * TILE_SIZE,
+						static_cast<float>(newPos.y) * TILE_SIZE };
+				}
 			}
 		}
 	}
@@ -111,11 +131,15 @@ void Game::updateNetworking()
 
 	if (m_client)
 	{
-		int x = 0;
-		int y = 0;
-		std::cin >> x;
-		std::cin >> y;
-		m_client->sendPlayerPosition(x, y);
+		/*if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		{
+			sf::Vector2i pos = static_cast<sf::Vector2i>(m_playerPositions[m_localId] / (float)TILE_SIZE);
+			pos.x += 1;
+			m_client->sendPlayerPosition(pos.x, pos.y);
+			m_playerPositions[m_localId] = sf::Vector2f{
+				static_cast<float>(pos.x) * TILE_SIZE,
+				static_cast<float>(pos.y) * TILE_SIZE };
+		}*/
 	}
 }
 
@@ -236,7 +260,7 @@ void Game::drawGameplay()
 
 void Game::initInfoRecieved(char t_id)
 {
-	m_playerPositions[t_id] = sf::Vector2f{ 0.0f, 0.0f };
+	m_playerPositions[t_id] = sf::Vector2f{ 0.0f, (float)(static_cast<int>(t_id) * TILE_SIZE) };
 	m_localId = t_id;
 }
 

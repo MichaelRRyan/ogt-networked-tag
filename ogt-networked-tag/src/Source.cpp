@@ -30,11 +30,14 @@ int main()
 {
 	srand(static_cast<unsigned>(time(nullptr))); // Set the random value seed
 
-	Game game; // Create a game class
-
 	int num = 0;
 	std::cout << "1 to start server, 2 to connect to a server: ";
 	std::cin >> num;
+	
+	if (num != 1 && num != 2)
+		return EXIT_FAILURE;
+
+	Game game; // Create a game class
 
 	if (num == 1)
 	{

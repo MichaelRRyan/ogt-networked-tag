@@ -57,32 +57,37 @@ Server::~Server()
 
 void Server::NewConnectionThread(Server & server)
 {
-	int addrlen = sizeof(m_addr);
-	SOCKET newConnectionSocket = accept(server.m_sListen, (SOCKADDR*)&server.m_addr, &addrlen); //Accept a new connection
-	if (newConnectionSocket == 0) //If accepting the client connection failed
+	while (!server.m_terminateThreads)
 	{
-		std::cout << "Failed to accept the client's connection." << std::endl;
-	}
-	else //If client connection properly accepted
-	{
-		std::lock_guard<std::shared_mutex> lock(server.m_mutex_connectionMgr); //Lock connection manager mutex since we are adding an element to connection vector
-		std::shared_ptr<Connection> newConnection(std::make_shared<Connection>(newConnectionSocket));
-		server.m_connections.push_back(newConnection); //push new connection into vector of connections
-		newConnection->m_ID = server.m_IDCounter; //Set ID for this connection
-		server.m_IDCounter += 1; //Increment ID Counter...
-		std::cout << "Client Connected! ID:" << newConnection->m_ID << std::endl;
-		std::thread CHT(ClientHandlerThread, std::ref(server), newConnection);
-		CHT.detach();
-		server.m_threads.push_back(&CHT);
+		int addrlen = sizeof(m_addr);
+		SOCKET newConnectionSocket = accept(server.m_sListen, (SOCKADDR*)&server.m_addr, &addrlen); //Accept a new connection
+		if (newConnectionSocket == 0) //If accepting the client connection failed
+		{
+			std::cout << "Failed to accept the client's connection." << std::endl;
+		}
+		else //If client connection properly accepted
+		{
+			std::lock_guard<std::shared_mutex> lock(server.m_mutex_connectionMgr); //Lock connection manager mutex since we are adding an element to connection vector
+			std::shared_ptr<Connection> newConnection(std::make_shared<Connection>(newConnectionSocket));
+			server.m_connections.push_back(newConnection); //push new connection into vector of connections
+			newConnection->m_ID = server.m_IDCounter; //Set ID for this connection
+			server.m_IDCounter += 1; //Increment ID Counter...
+			std::cout << "Client Connected! ID:" << newConnection->m_ID << std::endl;
+			std::thread CHT(ClientHandlerThread, std::ref(server), newConnection);
+			CHT.detach();
+			server.m_threads.push_back(&CHT);
 
-		// Sends the new client their ID.
-		std::string info = "" + (char)newConnection->m_ID;
-		std::shared_ptr<Packet> p = std::make_shared<Packet>();
-		p->Append(PacketType::InitInfo);
-		p->Append(info.size());
-		p->Append(info);
+			// Sends the new client their ID.
 
-		newConnection->m_pm.Append(p);
+			std::string info{ "" };
+			info += static_cast<char>(newConnection->m_ID);
+			std::shared_ptr<Packet> p = std::make_shared<Packet>();
+			p->Append(PacketType::InitInfo);
+			p->Append(info.size());
+			p->Append(info);
+
+			newConnection->m_pm.Append(p);
+		}
 	}
 }
 
