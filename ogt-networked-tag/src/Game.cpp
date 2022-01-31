@@ -54,6 +54,15 @@ void Game::startServer()
 {
 	// Creates a server on port 1111, false=do not loopback to localhost (others can connect).
 	m_server = new Server(1111, false);
+
+	m_server->setPacketRecievedCallback([&](PacketType type, std::string message)
+		{ packetRecieved(type, message); });
+
+	char id = 0;
+	m_localId = id;
+	m_players[id].setPos({ 7, 2 });
+	m_players[id].setCharacter((int)id);
+	std::cout << "Joining..." << std::endl;
 }
 
 bool Game::startClient(std::string const& t_ip)
@@ -107,8 +116,13 @@ void Game::processEvents()
 
 				if (newPos != pos)
 				{
-					m_client->requestToMove(newPos.x, newPos.y);
-					//m_players[m_localId].setPos(newPos);
+					if (m_client)
+						m_client->requestToMove(newPos.x, newPos.y);
+					else
+					{
+						m_server->setPlayerPosition(m_localId, newPos.x, newPos.y);
+						m_players[m_localId].setPos({ newPos.x, newPos.y });
+					}
 				}
 			}
 		}
@@ -261,24 +275,31 @@ void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 			int tileX = static_cast<int>(t_string.at(1));
 			int tileY = static_cast<int>(t_string.at(2));
 			m_localId = id;
-			m_players.emplace(id, Player()); // Inserts a new player.
 			m_players[id].setPos({ tileX, tileY });
-			m_players[id].setCharacter(id);
-			//m_playerPositions[id] = sf::Vector2f{ 0.0f, (float)(static_cast<int>(t_id) * TILE_SIZE) };
+			m_players[id].setCharacter((int)id);
+			std::cout << "Joining..." << std::endl;
+		}
+		break;
+	case PacketType::PlayerJoined:
+		if (t_string.size() == 3)
+		{
+			char id = t_string.at(0);
+			int tileX = static_cast<int>(t_string.at(1));
+			int tileY = static_cast<int>(t_string.at(2));
+			m_players[id].setPos({ tileX, tileY });
+			m_players[id].setCharacter((int)id);
+			std::cout << "Setting up player..." << std::endl;
 		}
 		break;
 	case PacketType::MovePlayer:
-		if (t_string.size() == 5)
+		if (t_string.size() == 3)
 		{
 			char id = t_string.at(0);
 			int newTileX = static_cast<int>(t_string.at(1));
 			int newTileY = static_cast<int>(t_string.at(2));
-			int oldTileX = static_cast<int>(t_string.at(3));
-			int oldTileY = static_cast<int>(t_string.at(4));
 			m_players[id].setPos({ newTileX, newTileY });
 
-			//m_player.move({ oldTileX - newTileX, oldTileY - newTileY }, m_maze);
-			//m_playerPositions[id] = sf::Vector2f{ tileX* TILE_SIZE, tileY* TILE_SIZE };
+			std::cout << "Moving player..." << std::endl;
 		}
 		break;
 	case PacketType::PlayerDied:

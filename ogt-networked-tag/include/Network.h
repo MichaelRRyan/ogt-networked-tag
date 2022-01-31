@@ -3,13 +3,17 @@
 
 #include <WinSock2.h>
 #include <string>
+#include <functional>
 
+#include "Network.h"
 #include "PacketManager.h"
 
 class Network
 {
 public:
 
+	using PacketRecievedCallback = std::function<void(PacketType, std::string)>;
+	void setPacketRecievedCallback(PacketRecievedCallback t_callback);
 
 protected:
 
@@ -19,6 +23,8 @@ protected:
 	bool getPacketType(SOCKET t_socket, PacketType &  t_packetType);
 	void sendString(PacketManager & t_packageManager, PacketType t_packetType, std::string const & t_string);
 	bool getString(SOCKET t_socket, std::string & t_string);
+
+	PacketRecievedCallback m_packetRecievedCallback;
 
 private:
 

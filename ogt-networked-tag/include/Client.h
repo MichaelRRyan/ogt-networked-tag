@@ -11,15 +11,11 @@ class Client : public Network
 {
 public: // Public functions
 
-	using PacketRecievedCallback = std::function<void(PacketType, std::string)>;
-
 	Client(const char * ip, const int port);
 	bool Connect();
 	void Disconnect();
 	bool RequestFile(const std::string & fileName);
 	void requestToMove(int t_x, int t_y);
-
-	void setPacketRecievedCallback(PacketRecievedCallback t_callback);
 
 	~Client();
 
@@ -41,7 +37,5 @@ private: //Private variables
 
 	std::thread m_pst; //Create thread to send packets
 	std::thread m_ct; //Create thread to listen to server
-
-	PacketRecievedCallback m_packetRecievedCallback;
 
 };

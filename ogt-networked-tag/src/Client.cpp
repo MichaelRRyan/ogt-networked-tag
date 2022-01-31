@@ -73,6 +73,7 @@ bool Client::ProcessPacketType(PacketType packetType)
 	case PacketType::GameStarted:
 	case PacketType::GameEnded:
 	case PacketType::JoinInfo:
+	case PacketType::PlayerJoined:
 	case PacketType::MovePlayer:
 	case PacketType::PlayerDied:
 	case PacketType::RockMoved:
@@ -190,11 +191,6 @@ void Client::requestToMove(int t_x, int t_y)
 	message += static_cast<char>(t_x);
 	message += static_cast<char>(t_y);
 	sendString(m_pm, PacketType::RequestToMove, message);
-}
-
-void Client::setPacketRecievedCallback(PacketRecievedCallback t_callback)
-{
-	m_packetRecievedCallback = t_callback;
 }
 
 void Client::PacketSenderThread(Client & client) //Thread for all outgoing packets

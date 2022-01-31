@@ -11,6 +11,7 @@ enum class PacketType
 	GameStarted,
 	GameEnded,
 	JoinInfo,
+	PlayerJoined,
 	MovePlayer,
 	PlayerDied,
 	RockMoved,

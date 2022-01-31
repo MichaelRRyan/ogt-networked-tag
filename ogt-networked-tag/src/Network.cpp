@@ -1,6 +1,12 @@
 #include "Network.h"
 
 ////////////////////////////////////////////////////////////////////////////////
+void Network::setPacketRecievedCallback(PacketRecievedCallback t_callback)
+{
+	m_packetRecievedCallback = t_callback;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 bool Network::sendAll(SOCKET t_socket, char const* t_data, int const t_totalBytes)
 {
 	int bytesSent = 0; // Holds the total bytes sent.

@@ -36,7 +36,7 @@ Server::Server(int port, bool loopBacktoLocalHost) //Port = port to broadcast on
 		MessageBoxA(0, ErrorMsg.c_str(), "Error", MB_OK | MB_ICONERROR);
 		exit(1);
 	}
-	m_IDCounter = 0;
+	m_IDCounter = 1;
 	std::thread PST(PacketSenderThread, std::ref(*this));
 	PST.detach();
 	m_threads.push_back(&PST);
@@ -53,6 +53,22 @@ Server::~Server()
 	{
 		t->join();
 	}
+}
+
+void Server::setPlayerPosition(char id, int x, int y)
+{
+	std::string message{ "   " };
+	message.at(0) = id;
+	message.at(1) = (char)x;
+	message.at(2) = (char)y;
+
+	std::shared_ptr<Packet> p = std::make_shared<Packet>();
+	p->Append(PacketType::MovePlayer);
+	p->Append(message.size());
+	p->Append(message);
+
+	for (auto conn : m_connections)
+		conn->m_pm.Append(p);
 }
 
 void Server::NewConnectionThread(Server & server)
@@ -86,8 +102,20 @@ void Server::NewConnectionThread(Server & server)
 			p->Append(PacketType::JoinInfo);
 			p->Append(info.size());
 			p->Append(info);
-
 			newConnection->m_pm.Append(p);
+
+			std::shared_ptr<Packet> p2 = std::make_shared<Packet>();
+			p2->Append(PacketType::PlayerJoined);
+			p2->Append(info.size());
+			p2->Append(info);
+			
+			// Updates all other players of the new joiner.
+			for (auto conn : server.m_connections) //For each connection...
+			{
+				if (conn == newConnection) //If connection is the user who sent the message...
+					continue;//Skip to the next user since there is no purpose in sending the message back to the user who sent it.
+				conn->m_pm.Append(p2);
+			}
 		}
 	}
 }
@@ -102,8 +130,8 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 		if (!getString(connection->m_socket, message))
 			return false; 
 
-		// Adds the ID to the start and empty to the end to satisfy a future feature.
-		message = " " + message + "  ";
+		// Adds the ID to the start.
+		message = " " + message;
 		message.at(0) = connection->m_ID;
 
 		std::shared_ptr<Packet> p = std::make_shared<Packet>();

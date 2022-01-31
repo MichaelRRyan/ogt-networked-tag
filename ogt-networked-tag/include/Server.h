@@ -34,6 +34,8 @@ public:
 	Server(int port, bool loopBacktoLocalHost = true);
 	~Server();
 
+	void setPlayerPosition(char id, int x, int y);
+
 private:
 
 	bool ProcessPacket(std::shared_ptr<Connection> connection, PacketType packetType);
@@ -47,7 +49,7 @@ private:
 
 	std::vector<std::shared_ptr<Connection>> m_connections;
 	std::shared_mutex m_mutex_connectionMgr; //mutex for managing connections (used when a client disconnects)
-	int m_IDCounter = 0;
+	int m_IDCounter = 1;
 	SOCKADDR_IN m_addr; //Address that we will bind our listening socket to
 	SOCKET m_sListen;
 	bool m_terminateThreads = false;
