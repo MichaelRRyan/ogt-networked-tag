@@ -92,11 +92,10 @@ void Player::move(Direction t_direction, Cell t_maze[][MAX_COLS])
 		else if (t_maze[desiredPosition.y + dirVector.y][desiredPosition.x + dirVector.x].getTileType() != Tile::Rock
 			&& t_maze[desiredPosition.y + dirVector.y][desiredPosition.x + dirVector.x].getTileType() != Tile::Moveable)
 		{
-			moveRock(t_maze, t_direction);
+			m_rock.moveRock(m_pos, t_direction);
 			m_previousPos = m_pos;
 			m_pos = desiredPosition;
 			m_moveTimer = MOVEMENT_TIME;
-			
 		}
 	}
 
@@ -148,6 +147,8 @@ void Player::update(Cell t_maze[][MAX_COLS])
 
 	m_playerName.setPosition(sf::Vector2f(m_body.getPosition().x - 25, m_body.getPosition().y - 50));
 
+	m_rock.update(t_maze);
+
 	if (t_maze[getPos().y][getPos().x].getTileType() == Tile::Moveable)
 		if (m_lives > 0)
 			m_lives--;
@@ -185,13 +186,4 @@ void Player::animate()
 	int frameNum = static_cast<int>((1.0 * m_moveTimer / MOVEMENT_TIME) * 3);
 
 	m_body.setTextureRect(sf::IntRect{ m_character.x + (CHAR_SPACING * frameNum), m_character.y + (m_characterDirection * CHAR_HEIGHT),CHAR_WIDTH, CHAR_HEIGHT });
-}
-
-void Player::moveRock(Cell t_maze[][MAX_COLS], Direction t_direction)
-{
-	sf::Vector2i dirVector = Global::getDirectionVector(t_direction);
-	sf::Vector2i desiredPosition = m_pos + dirVector;
-
-	t_maze[desiredPosition.y][desiredPosition.x].setTileType(t_maze[desiredPosition.y + dirVector.y][desiredPosition.x + dirVector.x].getTileType());
-	t_maze[desiredPosition.y + dirVector.y][desiredPosition.x + dirVector.x].setTileType(Tile::Moveable);
 }

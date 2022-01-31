@@ -8,6 +8,7 @@
 #include <sstream>
 #include "Globals.h"
 #include "Cell.h"
+#include "Rock.h"
 
 class Player : public sf::Drawable
 {
@@ -32,8 +33,7 @@ class Player : public sf::Drawable
 	sf::Font m_font;
 	sf::Text m_playerName;
 
-	bool rockMoving = false;
-	Direction dir;
+	Rock m_rock;
 
 public:
 	Player();
@@ -63,8 +63,6 @@ public:
 	void animate();
 
 	inline void setCharName(std::string t_str) { m_playerName.setString(t_str); }
-
-	void moveRock(Cell t_maze[][MAX_COLS], Direction t_direction);
 };
 
 #endif // !PLAYER_H
