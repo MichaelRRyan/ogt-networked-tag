@@ -19,6 +19,7 @@ Game::Game() :
 
 	setUpGame();
 	setUpFontAndText();
+	m_player.setCharName("Jeff");
 }
 
 Game::~Game()
@@ -107,8 +108,8 @@ void Game::processEvents()
 					m_playerPositions[m_localId] = sf::Vector2f{
 						static_cast<float>(newPos.x) * TILE_SIZE,
 						static_cast<float>(newPos.y) * TILE_SIZE };
-				}
-			}
+	}
+}
 		}
 	}
 }
@@ -116,7 +117,14 @@ void Game::processEvents()
 void Game::update(sf::Time t_deltaTime)
 {
 	if (m_exitGame)
+	{
 		m_window.close();
+	}
+
+	m_scoreText.setString(std::to_string(m_player.getScore()));
+	m_livesText.setString(std::to_string(m_player.getLives()));
+
+	m_player.update(m_maze);
 }
 
 void Game::render()
@@ -124,6 +132,7 @@ void Game::render()
 	m_window.clear();
 
 	drawGameplay();
+	m_window.draw(m_player);
 
 	m_window.display();
 }
@@ -131,6 +140,8 @@ void Game::render()
 void Game::setUpGame()
 {
 	setUpMaze();
+	m_player.respawn();
+	m_maze[2][12].setTileType(Tile::None);
 }
 
 void Game::setUpMaze()

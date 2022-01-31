@@ -47,6 +47,7 @@ private:
 	sf::Sprite m_tileSprite; // sprite for each tile
 	sf::Sprite m_hudIcons; // Icons for the player's hud
 
+
 	Cell m_maze[MAX_ROWS][MAX_COLS];
 
 	// Networking variables.
@@ -55,6 +56,7 @@ private:
 
 	std::map<char, sf::Vector2f> m_playerPositions;
 	char m_localId;
+	Player m_player;
 
 };
 
