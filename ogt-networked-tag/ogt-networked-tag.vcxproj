@@ -151,6 +151,7 @@
     <ClCompile Include="src\Cell.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Player.cpp" />
+    <ClCompile Include="src\Rock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -159,6 +160,7 @@
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\Player.h" />
+    <ClInclude Include="include\Rock.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="PacketManager.h" />
     <ClInclude Include="PacketStructs.h" />
