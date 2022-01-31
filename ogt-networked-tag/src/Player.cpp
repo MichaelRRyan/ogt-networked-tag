@@ -132,7 +132,7 @@ void Player::update(Cell t_maze[][MAX_COLS])
 {
 	if (m_moveTimer == 0)
 	{
-		movementInput(t_maze);
+		//movementInput(t_maze);
 		m_body.setTextureRect(sf::IntRect{ m_character.x + CHAR_SPACING,m_character.y + m_characterDirection * CHAR_HEIGHT,CHAR_WIDTH,CHAR_HEIGHT });
 	}
 	else

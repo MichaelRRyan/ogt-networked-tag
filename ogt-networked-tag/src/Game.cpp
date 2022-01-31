@@ -2,7 +2,8 @@
 
 Game::Game() :
 	m_window{ sf::VideoMode{ WINDOW_WIDTH, WINDOW_HEIGHT, 32u }, "OGT Game" },
-	m_exitGame{ false }
+	m_exitGame{ false },
+	m_localId{ 100 }
 {
 	if (!m_terrainTexture.loadFromFile("ASSETS\\IMAGES\\terrain_atlas.png"))
 	{
@@ -18,11 +19,13 @@ Game::Game() :
 
 	setUpGame();
 	setUpFontAndText();
-	m_player.setCharName("Jeff");
+	//m_player.setCharName("Jeff");
 }
 
 Game::~Game()
 {
+	if (m_server) delete m_server;
+	if (m_client) delete m_client;
 }
 
 void Game::run()
@@ -47,6 +50,35 @@ void Game::run()
 
 }
 
+void Game::startServer()
+{
+	// Creates a server on port 1111, false=do not loopback to localhost (others can connect).
+	m_server = new Server(1111, false);
+
+	m_server->setPacketRecievedCallback([&](PacketType type, std::string message)
+		{ packetRecieved(type, message); });
+
+	char id = 0;
+	m_localId = id;
+	m_players[id].setPos({ 7, 2 });
+	m_players[id].setCharacter((int)id);
+	std::cout << "Joining..." << std::endl;
+}
+
+bool Game::startClient(std::string const& t_ip)
+{
+	// Create client to connect to a server on port 1111.
+	m_client = new Client(t_ip.c_str(), 1111);
+
+	m_client->setPacketRecievedCallback([&](PacketType type, std::string message)
+		{ packetRecieved(type, message); });
+
+	if (!m_client->Connect()) //If client fails to connect...
+		return false;
+
+	return true;
+}
+
 void Game::processEvents()
 {
 	sf::Event nextEvent;
@@ -55,6 +87,44 @@ void Game::processEvents()
 		if (sf::Event::Closed == nextEvent.type)
 		{
 			m_window.close();
+		}
+		else if (sf::Event::KeyPressed == nextEvent.type)
+		{
+			// If an id has been set.
+			if (m_localId != 100)
+			{
+				
+				sf::Vector2i pos = m_players[m_localId].getPos();
+				sf::Vector2i newPos = pos;
+
+				if (nextEvent.key.code == sf::Keyboard::Left)
+				{
+					newPos.x -= 1;
+				}
+				else if (nextEvent.key.code == sf::Keyboard::Right)
+				{
+					newPos.x += 1;
+				}
+				else if (nextEvent.key.code == sf::Keyboard::Up)
+				{
+					newPos.y -= 1;
+				}
+				else if (nextEvent.key.code == sf::Keyboard::Down)
+				{
+					newPos.y += 1;
+				}
+
+				if (newPos != pos)
+				{
+					if (m_client)
+						m_client->requestToMove(newPos.x, newPos.y);
+					else
+					{
+						m_server->setPlayerPosition(m_localId, newPos.x, newPos.y);
+						m_players[m_localId].setPos({ newPos.x, newPos.y });
+					}
+				}
+			}
 		}
 	}
 }
@@ -66,10 +136,15 @@ void Game::update(sf::Time t_deltaTime)
 		m_window.close();
 	}
 
-	m_scoreText.setString(std::to_string(m_player.getScore()));
-	m_livesText.setString(std::to_string(m_player.getLives()));
+	// If the local id is set.
+	if (m_localId != 100)
+	{
+		m_scoreText.setString(std::to_string(m_players[m_localId].getScore()));
+		m_livesText.setString(std::to_string(m_players[m_localId].getLives()));
+	}
 
-	m_player.update(m_maze);
+	for (auto & playerPair : m_players)
+		playerPair.second.update(m_maze);
 }
 
 void Game::render()
@@ -77,7 +152,10 @@ void Game::render()
 	m_window.clear();
 
 	drawGameplay();
-	m_window.draw(m_player);
+
+	for (auto& playerPair : m_players)
+		m_window.draw(playerPair.second);
+	
 
 	m_window.display();
 }
@@ -85,7 +163,7 @@ void Game::render()
 void Game::setUpGame()
 {
 	setUpMaze();
-	m_player.respawn();
+	//m_player.respawn();
 	m_maze[2][12].setTileType(Tile::None);
 }
 
@@ -180,4 +258,55 @@ void Game::drawGameplay()
 
 	m_window.draw(m_scoreText);
 	m_window.draw(m_livesText);
+}
+
+void Game::packetRecieved(PacketType t_packetType, std::string t_string)
+{
+	switch (t_packetType)
+	{
+	case PacketType::GameStarted:
+		break;
+	case PacketType::GameEnded:
+		break;
+	case PacketType::JoinInfo:
+		if (t_string.size() == 3)
+		{
+			char id = t_string.at(0);
+			int tileX = static_cast<int>(t_string.at(1));
+			int tileY = static_cast<int>(t_string.at(2));
+			m_localId = id;
+			m_players[id].setPos({ tileX, tileY });
+			m_players[id].setCharacter((int)id);
+			std::cout << "Joining..." << std::endl;
+		}
+		break;
+	case PacketType::PlayerJoined:
+		if (t_string.size() == 3)
+		{
+			char id = t_string.at(0);
+			int tileX = static_cast<int>(t_string.at(1));
+			int tileY = static_cast<int>(t_string.at(2));
+			m_players[id].setPos({ tileX, tileY });
+			m_players[id].setCharacter((int)id);
+			std::cout << "Setting up player..." << std::endl;
+		}
+		break;
+	case PacketType::MovePlayer:
+		if (t_string.size() == 3)
+		{
+			char id = t_string.at(0);
+			int newTileX = static_cast<int>(t_string.at(1));
+			int newTileY = static_cast<int>(t_string.at(2));
+			m_players[id].setPos({ newTileX, newTileY });
+
+			std::cout << "Moving player..." << std::endl;
+		}
+		break;
+	case PacketType::PlayerDied:
+		break;
+	case PacketType::RockMoved:
+		break;
+	default:
+		break;
+	}
 }

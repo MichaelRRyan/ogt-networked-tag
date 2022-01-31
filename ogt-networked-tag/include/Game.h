@@ -3,9 +3,15 @@
 
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <iostream>
+#include <map>
+
 #include "Globals.h"
 #include "Cell.h"
+#include "Server.h"
+#include "Client.h"
 #include "Player.h"
+
 
 class Game
 {
@@ -14,6 +20,9 @@ public:
 	~Game();
 
 	void run();
+
+	void startServer();
+	bool startClient(std::string const & t_ip);
 
 private:
 
@@ -24,6 +33,8 @@ private:
 	void setUpMaze();
 	void setUpFontAndText();
 	void drawGameplay();
+
+	void packetRecieved(PacketType t_packetType, std::string t_string);
 
 	sf::RenderWindow m_window; // Render window
 	bool m_exitGame; // Closes the window if true
@@ -41,7 +52,12 @@ private:
 
 	Cell m_maze[MAX_ROWS][MAX_COLS];
 
-	Player m_player;
+	// Networking variables.
+	Server * m_server;
+	Client * m_client;
+
+	char m_localId;
+	std::map<char, Player> m_players;
 
 };
 

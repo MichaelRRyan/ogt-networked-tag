@@ -3,6 +3,19 @@
 
 enum class PacketType
 {
+	// Client to Server.
+	RequestToMove,
+	ReadyToPlay,
+
+	// Server to Client.
+	GameStarted,
+	GameEnded,
+	JoinInfo,
+	PlayerJoined,
+	MovePlayer,
+	PlayerDied,
+	RockMoved,
+
 	ChatMessage,
 	FileTransferRequestFile, //Sent to request a file
 	FileTransfer_EndOfFile, //Sent for when file transfer is complete
