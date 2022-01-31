@@ -117,30 +117,6 @@ void Game::update(sf::Time t_deltaTime)
 {
 	if (m_exitGame)
 		m_window.close();
-
-	updateNetworking();
-}
-
-void Game::updateNetworking()
-{
-	if (m_server)
-	{
-		// Accepts a new connection (if someones trying to connect).
-		//m_server->ListenForNewConnection();
-	}
-
-	if (m_client)
-	{
-		/*if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-		{
-			sf::Vector2i pos = static_cast<sf::Vector2i>(m_playerPositions[m_localId] / (float)TILE_SIZE);
-			pos.x += 1;
-			m_client->sendPlayerPosition(pos.x, pos.y);
-			m_playerPositions[m_localId] = sf::Vector2f{
-				static_cast<float>(pos.x) * TILE_SIZE,
-				static_cast<float>(pos.y) * TILE_SIZE };
-		}*/
-	}
 }
 
 void Game::render()

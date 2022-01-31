@@ -26,7 +26,6 @@ private:
 
 	void processEvents();
 	void update(sf::Time t_deltaTime);
-	void updateNetworking();
 	void render();
 	void setUpGame();
 	void setUpMaze();
