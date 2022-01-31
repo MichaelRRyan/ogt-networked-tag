@@ -9,18 +9,18 @@
 
 class Client : public Network
 {
-public: //Public functions
+public: // Public functions
 
-	using PlayerPositionCallback = std::function<void(char, char, char)>;
-	using InitInfoCallback = std::function<void(char)>;
+	using PacketRecievedCallback = std::function<void(PacketType, std::string)>;
 
 	Client(const char * ip, const int port);
 	bool Connect();
 	void Disconnect();
 	bool RequestFile(const std::string & fileName);
-	void sendPlayerPosition(int t_x, int t_y);
-	void setPlayerPositionCallback(PlayerPositionCallback t_callback);
-	void setInitInfoCallback(InitInfoCallback t_callback);
+	void requestToMove(int t_x, int t_y);
+
+	void setPacketRecievedCallback(PacketRecievedCallback t_callback);
+
 	~Client();
 
 private: //Private functions
@@ -31,6 +31,7 @@ private: //Private functions
 	static void PacketSenderThread(Client & client); //Packet sender thread which sends out packets existing in packet manager
 
 private: //Private variables
+
 	bool m_terminateThreads = false;
 	bool m_isConnected = false;
 	FileTransferData m_file; //Object that contains information about our file that is being received from the server.
@@ -41,7 +42,6 @@ private: //Private variables
 	std::thread m_pst; //Create thread to send packets
 	std::thread m_ct; //Create thread to listen to server
 
-	PlayerPositionCallback m_playerPositionCallback;
-	InitInfoCallback m_initInfoCallback;
+	PacketRecievedCallback m_packetRecievedCallback;
 
 };

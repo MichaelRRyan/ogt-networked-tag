@@ -63,30 +63,38 @@ Client::~Client()
 
 bool Client::ProcessPacketType(PacketType packetType)
 {
+	/*
+	MovePlayer,
+	PlayerDied,
+	RockMoved,
+	*/
 	switch (packetType)
 	{
-	case PacketType::InitInfo: //If PacketType is an InitInfo
+	case PacketType::GameStarted:
+	case PacketType::GameEnded:
+	case PacketType::JoinInfo:
+	case PacketType::MovePlayer:
+	case PacketType::PlayerDied:
+	case PacketType::RockMoved:
 	{
-		std::string Message; //string to store our message we received
-		if (!getString(m_connection, Message)) //Get the chat message and store it in variable: Message
-			return false; //If we do not properly get the chat message, return false
+		std::string message;
+		if (!getString(m_connection, message))
+			return false;
 
-		if (Message.size() == 1)
-			m_initInfoCallback(Message.at(0));
-
+		m_packetRecievedCallback(packetType, message);
 		break;
 	}
-	case PacketType::PlayerPosition: //If PacketType is a PlayerPosition
-	{
-		std::string Message; //string to store our message we received
-		if (!getString(m_connection, Message)) //Get the chat message and store it in variable: Message
-			return false; //If we do not properly get the chat message, return false
-		
-		if (Message.size() == 3)
-			m_playerPositionCallback(Message.at(0), Message.at(1), Message.at(2));
+	//case PacketType::PlayerPosition: //If PacketType is a PlayerPosition
+	//{
+	//	std::string Message; //string to store our message we received
+	//	if (!getString(m_connection, Message)) //Get the chat message and store it in variable: Message
+	//		return false; //If we do not properly get the chat message, return false
+	//	
+	//	if (Message.size() == 3)
+	//		m_playerPositionCallback(Message.at(0), Message.at(1), Message.at(2));
 
-		break;
-	}
+	//	break;
+	//}
 	case PacketType::ChatMessage: //If PacketType is a chat message PacketType
 	{
 		std::string Message; //string to store our message we received
@@ -176,22 +184,17 @@ bool Client::RequestFile(const std::string & fileName)
 	return true;
 }
 
-void Client::sendPlayerPosition(int t_x, int t_y)
+void Client::requestToMove(int t_x, int t_y)
 {
-	std::string message{ " " };
+	std::string message{ "" };
 	message += static_cast<char>(t_x);
 	message += static_cast<char>(t_y);
-	sendString(m_pm, PacketType::PlayerPosition, message);
+	sendString(m_pm, PacketType::RequestToMove, message);
 }
 
-void Client::setPlayerPositionCallback(PlayerPositionCallback t_callback)
+void Client::setPacketRecievedCallback(PacketRecievedCallback t_callback)
 {
-	m_playerPositionCallback = t_callback;
-}
-
-void Client::setInitInfoCallback(InitInfoCallback t_callback)
-{
-	m_initInfoCallback = t_callback;
+	m_packetRecievedCallback = t_callback;
 }
 
 void Client::PacketSenderThread(Client & client) //Thread for all outgoing packets

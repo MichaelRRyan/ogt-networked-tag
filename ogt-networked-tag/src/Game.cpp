@@ -19,7 +19,7 @@ Game::Game() :
 
 	setUpGame();
 	setUpFontAndText();
-	m_player.setCharName("Jeff");
+	//m_player.setCharName("Jeff");
 }
 
 Game::~Game()
@@ -61,11 +61,8 @@ bool Game::startClient(std::string const& t_ip)
 	// Create client to connect to a server on port 1111.
 	m_client = new Client(t_ip.c_str(), 1111);
 
-	m_client->setInitInfoCallback([&](char id)
-		{ initInfoRecieved(id); });
-
-	m_client->setPlayerPositionCallback([&](char id, char x, char y)
-		{ playerPositionRecieved(id, x, y); });
+	m_client->setPacketRecievedCallback([&](PacketType type, std::string message)
+		{ packetRecieved(type, message); });
 
 	if (!m_client->Connect()) //If client fails to connect...
 		return false;
@@ -87,7 +84,8 @@ void Game::processEvents()
 			// If an id has been set.
 			if (m_localId != 100)
 			{
-				sf::Vector2i pos = static_cast<sf::Vector2i>(m_playerPositions[m_localId] / (float)TILE_SIZE);
+				
+				sf::Vector2i pos = m_players[m_localId].getPos();
 				sf::Vector2i newPos = pos;
 
 				if (nextEvent.key.code == sf::Keyboard::Left)
@@ -98,18 +96,21 @@ void Game::processEvents()
 				{
 					newPos.x += 1;
 				}
-
-				/*sf::Vector2f pos = m_playerPositions[m_localId];
-				m_client->sendPlayerPosition(((int)pos.x) / TILE_SIZE + 1, ((int)pos.y) / TILE_SIZE);*/
+				else if (nextEvent.key.code == sf::Keyboard::Up)
+				{
+					newPos.y -= 1;
+				}
+				else if (nextEvent.key.code == sf::Keyboard::Down)
+				{
+					newPos.y += 1;
+				}
 
 				if (newPos != pos)
 				{
-					m_client->sendPlayerPosition(newPos.x, newPos.y);
-					m_playerPositions[m_localId] = sf::Vector2f{
-						static_cast<float>(newPos.x) * TILE_SIZE,
-						static_cast<float>(newPos.y) * TILE_SIZE };
-	}
-}
+					m_client->requestToMove(newPos.x, newPos.y);
+					//m_players[m_localId].setPos(newPos);
+				}
+			}
 		}
 	}
 }
@@ -121,10 +122,15 @@ void Game::update(sf::Time t_deltaTime)
 		m_window.close();
 	}
 
-	m_scoreText.setString(std::to_string(m_player.getScore()));
-	m_livesText.setString(std::to_string(m_player.getLives()));
+	// If the local id is set.
+	if (m_localId != 100)
+	{
+		m_scoreText.setString(std::to_string(m_players[m_localId].getScore()));
+		m_livesText.setString(std::to_string(m_players[m_localId].getLives()));
+	}
 
-	m_player.update(m_maze);
+	for (auto & playerPair : m_players)
+		playerPair.second.update(m_maze);
 }
 
 void Game::render()
@@ -132,7 +138,10 @@ void Game::render()
 	m_window.clear();
 
 	drawGameplay();
-	m_window.draw(m_player);
+
+	for (auto& playerPair : m_players)
+		m_window.draw(playerPair.second);
+	
 
 	m_window.display();
 }
@@ -140,7 +149,7 @@ void Game::render()
 void Game::setUpGame()
 {
 	setUpMaze();
-	m_player.respawn();
+	//m_player.respawn();
 	m_maze[2][12].setTileType(Tile::None);
 }
 
@@ -221,14 +230,6 @@ void Game::drawGameplay()
 		}
 	}
 
-	// Draws placeholder players at their positions.
-	for (auto & player : m_playerPositions)
-	{
-		m_tileSprite.setPosition(player.second);
-		m_tileSprite.setTextureRect({ 320, 448, 32, 32 });
-		m_window.draw(m_tileSprite);
-	}
-
 	m_hudIcons.setTextureRect({ 64, 0, 288, 32 });
 	m_hudIcons.setPosition(256.0f, 0.0f);
 	m_window.draw(m_hudIcons);
@@ -245,14 +246,46 @@ void Game::drawGameplay()
 	m_window.draw(m_livesText);
 }
 
-void Game::initInfoRecieved(char t_id)
+void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 {
-	m_playerPositions[t_id] = sf::Vector2f{ 0.0f, (float)(static_cast<int>(t_id) * TILE_SIZE) };
-	m_localId = t_id;
-}
+	switch (t_packetType)
+	{
+	case PacketType::GameStarted:
+		break;
+	case PacketType::GameEnded:
+		break;
+	case PacketType::JoinInfo:
+		if (t_string.size() == 3)
+		{
+			char id = t_string.at(0);
+			int tileX = static_cast<int>(t_string.at(1));
+			int tileY = static_cast<int>(t_string.at(2));
+			m_localId = id;
+			m_players.emplace(id, Player()); // Inserts a new player.
+			m_players[id].setPos({ tileX, tileY });
+			m_players[id].setCharacter(id);
+			//m_playerPositions[id] = sf::Vector2f{ 0.0f, (float)(static_cast<int>(t_id) * TILE_SIZE) };
+		}
+		break;
+	case PacketType::MovePlayer:
+		if (t_string.size() == 5)
+		{
+			char id = t_string.at(0);
+			int newTileX = static_cast<int>(t_string.at(1));
+			int newTileY = static_cast<int>(t_string.at(2));
+			int oldTileX = static_cast<int>(t_string.at(3));
+			int oldTileY = static_cast<int>(t_string.at(4));
+			m_players[id].setPos({ newTileX, newTileY });
 
-void Game::playerPositionRecieved(char t_id, char t_x, char t_y)
-{
-	m_playerPositions[t_id] = sf::Vector2f{ 
-		static_cast<float>(t_x) * TILE_SIZE, static_cast<float>(t_y) * TILE_SIZE };
+			//m_player.move({ oldTileX - newTileX, oldTileY - newTileY }, m_maze);
+			//m_playerPositions[id] = sf::Vector2f{ tileX* TILE_SIZE, tileY* TILE_SIZE };
+		}
+		break;
+	case PacketType::PlayerDied:
+		break;
+	case PacketType::RockMoved:
+		break;
+	default:
+		break;
+	}
 }

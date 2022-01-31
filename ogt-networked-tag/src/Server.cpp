@@ -78,11 +78,12 @@ void Server::NewConnectionThread(Server & server)
 			server.m_threads.push_back(&CHT);
 
 			// Sends the new client their ID.
-
 			std::string info{ "" };
-			info += static_cast<char>(newConnection->m_ID);
+			info += static_cast<char>(newConnection->m_ID); // ID
+			info += static_cast<char>(7 + newConnection->m_ID); // Tile x
+			info += static_cast<char>(2); // Tile y
 			std::shared_ptr<Packet> p = std::make_shared<Packet>();
-			p->Append(PacketType::InitInfo);
+			p->Append(PacketType::JoinInfo);
 			p->Append(info.size());
 			p->Append(info);
 
@@ -95,17 +96,18 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 {
 	switch (packetType)
 	{
-	case PacketType::PlayerPosition: //Packet Type: Player Position
+	case PacketType::RequestToMove:
 	{
-		std::string message; //string to store our message we received
-		if (!getString(connection->m_socket, message)) //Get the chat message and store it in variable: Message
-			return false; //If we do not properly get the chat message, return false
-						  //Next we need to send the message out to each user
+		std::string message; 
+		if (!getString(connection->m_socket, message))
+			return false; 
 
+		// Adds the ID to the start and empty to the end to satisfy a future feature.
+		message = " " + message + "  ";
 		message.at(0) = connection->m_ID;
 
 		std::shared_ptr<Packet> p = std::make_shared<Packet>();
-		p->Append(PacketType::PlayerPosition);
+		p->Append(PacketType::MovePlayer);
 		p->Append(message.size());
 		p->Append(message);
 
