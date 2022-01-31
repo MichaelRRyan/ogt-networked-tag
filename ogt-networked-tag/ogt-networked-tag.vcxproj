@@ -144,10 +144,8 @@
     <ClCompile Include="src\Cell.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Player.cpp" />
-    <ClCompile Include="src\Cell.cpp" />
     <ClCompile Include="src\Client.cpp" />
     <ClCompile Include="src\FileTransferData.cpp" />
-    <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Network.cpp" />
     <ClCompile Include="src\Packet.cpp" />
     <ClCompile Include="src\PacketManager.cpp" />
@@ -160,7 +158,6 @@
     <ClInclude Include="include\Client.h" />
     <ClInclude Include="include\FileTransferData.h" />
     <ClInclude Include="include\Game.h" />
-    <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\Network.h" />
     <ClInclude Include="include\Packet.h" />
     <ClInclude Include="include\PacketManager.h" />

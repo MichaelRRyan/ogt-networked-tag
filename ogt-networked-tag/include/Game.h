@@ -9,6 +9,7 @@
 #include "Cell.h"
 #include "Server.h"
 #include "Client.h"
+#include "Player.h"
 
 
 class Game
