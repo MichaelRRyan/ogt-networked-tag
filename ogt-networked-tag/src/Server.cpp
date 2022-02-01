@@ -123,28 +123,14 @@ void Server::NewConnectionThread(Server & server)
 					continue;//Skip to the next user since there is no purpose in sending the message back to the user who sent it.
 				conn->m_pm.Append(p);
 
-				// Sends the new player all the existing players.
-				std::string otherPlayerInfo{ "" };
-				otherPlayerInfo += static_cast<char>(conn->m_ID); // ID
-				otherPlayerInfo += static_cast<char>(7 + conn->m_ID); // Tile x
-				otherPlayerInfo += static_cast<char>(2); // Tile y
-				std::shared_ptr<Packet> p2 = std::make_shared<Packet>();
-				p2->Append(PacketType::PlayerJoined);
-				p2->Append(otherPlayerInfo.size());
-				p2->Append(otherPlayerInfo);
-				newConnection->m_pm.Append(p2);
+				// Sends the new player the current already existing players.
+				newConnection->m_pm.Append(PS::PlayerJoined(
+					static_cast<char>(conn->m_ID), 7 + conn->m_ID, 2).toPacket());
 			}
 
 			// Sends the new player the server's player.
-			std::string serverPlayerInfo{ "" };
-			serverPlayerInfo += static_cast<char>(0); // ID
-			serverPlayerInfo += static_cast<char>(7); // Tile x
-			serverPlayerInfo += static_cast<char>(2); // Tile y
-			std::shared_ptr<Packet> p2 = std::make_shared<Packet>();
-			p2->Append(PacketType::PlayerJoined);
-			p2->Append(serverPlayerInfo.size());
-			p2->Append(serverPlayerInfo);
-			newConnection->m_pm.Append(p2);
+			newConnection->m_pm.Append(PS::PlayerJoined(
+				static_cast<char>(0), 7, 2).toPacket());
 		}
 	}
 }
