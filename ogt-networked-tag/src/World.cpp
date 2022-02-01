@@ -1,4 +1,5 @@
 #include "World.h"
+#include "..\include\World.h"
 
 World::World()
 {
@@ -63,6 +64,11 @@ std::map<char, Player*>& World::getPlayers()
 	return m_players;
 }
 
+bool World::isTileEmpty(int t_x, int t_y) const
+{
+	return m_maze[t_y][t_x].getTileType() == Tile::None;
+}
+
 void World::setupMaze()
 {
 	int mazeSetup[MAX_ROWS][MAX_COLS]{ // Setup a temporary 2D maze to setup the main maze
@@ -99,7 +105,7 @@ void World::setupMaze()
 		{
 			m_maze[row][col].setTileType(static_cast<Tile>(mazeSetup[row][col]));
 			if (mazeSetup[row][col] == 0)
-				m_maze[row][col].setTileType(Tile::Coin);
+				m_maze[row][col].setTileType(Tile::None);
 
 			if (row == 0 || row == MAX_ROWS - 1 || col == 0 || col == MAX_COLS - 1)
 				m_maze[row][col].setTileType(Tile::Rock);

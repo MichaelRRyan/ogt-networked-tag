@@ -9,6 +9,8 @@
 #include "Network.h"
 #include "PacketManager.h" // For PacketManager class
 
+#include "WorldInterface.h"
+
 class Connection
 {
 public:
@@ -34,6 +36,8 @@ public:
 	void setPlayerPosition(char id, int x, int y);
 	virtual char getLocalId() const override;
 
+	void setWorldInterface(WorldInterface* t_world);
+
 private:
 
 	bool ProcessPacket(std::shared_ptr<Connection> connection, PacketType packetType);
@@ -52,6 +56,8 @@ private:
 	SOCKET m_sListen;
 	bool m_terminateThreads = false;
 	std::vector<std::thread*> m_threads; //so destructor can wait on created threads to end...
+
+	WorldInterface * m_world;
 
 };
 

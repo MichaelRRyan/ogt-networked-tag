@@ -10,7 +10,6 @@ Game::Game() :
 
 	setUpGame();
 	setUpFontAndText();
-	//m_player.setCharName("Jeff");
 }
 
 Game::~Game()
@@ -38,7 +37,6 @@ void Game::run()
 		}
 		render();
 	}
-
 }
 
 void Game::startServer()
@@ -56,6 +54,8 @@ void Game::startServer()
 
 	m_server->setPacketRecievedCallback([&](PacketType type, std::string message)
 		{ packetRecieved(type, message); });
+
+	m_server->setWorldInterface(&m_world);
 
 	m_world.createPlayer(m_server->getLocalId(), { 7, 2 });
 	std::cout << "Joining..." << std::endl;
@@ -125,7 +125,7 @@ void Game::processEvents()
 				{
 					if (m_client)
 						m_client->requestToMove(newPos.x, newPos.y);
-					else
+					else if (m_world.isTileEmpty(newPos.x, newPos.y))
 					{
 						m_server->setPlayerPosition(id, newPos.x, newPos.y);
 						localPlayer->setPos({ newPos.x, newPos.y });

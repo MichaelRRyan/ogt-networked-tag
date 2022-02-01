@@ -13,7 +13,7 @@ class Cell
 public:
 	Cell();
 
-	inline Tile getTileType() { return m_tileType; }
+	inline Tile getTileType() const { return m_tileType; }
 	inline sf::IntRect getTexturePosition() { return m_texturePosition; }
 
 	void setTileType(Tile t_tileType);
