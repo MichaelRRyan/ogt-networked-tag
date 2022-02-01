@@ -3,7 +3,6 @@
 #include <string> //For std::string
 #include <functional>
 
-#include "FileTransferData.h" //For FileTransferData class
 #include "PacketManager.h" //For PacketManager class
 #include "Network.h"
 
@@ -14,7 +13,6 @@ public: // Public functions
 	Client(const char * ip, const int port);
 	bool Connect();
 	void Disconnect();
-	bool RequestFile(const std::string & fileName);
 	void requestToMove(int t_x, int t_y);
 
 	~Client();
@@ -30,7 +28,6 @@ private: //Private variables
 
 	bool m_terminateThreads = false;
 	bool m_isConnected = false;
-	FileTransferData m_file; //Object that contains information about our file that is being received from the server.
 	SOCKET m_connection;//This client's connection to the server
 	SOCKADDR_IN m_addr; //Address to be binded to our Connection socket
 	PacketManager m_pm; //Packet manager which sends all of client's outgoing packets

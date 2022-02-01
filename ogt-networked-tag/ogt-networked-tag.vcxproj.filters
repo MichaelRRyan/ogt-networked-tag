@@ -33,9 +33,6 @@
     <ClCompile Include="src\Client.cpp">
       <Filter>Source Files\Networking</Filter>
     </ClCompile>
-    <ClCompile Include="src\FileTransferData.cpp">
-      <Filter>Source Files\Networking</Filter>
-    </ClCompile>
     <ClCompile Include="src\Network.cpp">
       <Filter>Source Files\Networking</Filter>
     </ClCompile>
@@ -92,9 +89,6 @@
     <ClInclude Include="include\Network.h">
       <Filter>Header Files\Networking</Filter>
     </ClInclude>
-    <ClInclude Include="include\FileTransferData.h">
-      <Filter>Header Files\Networking</Filter>
-    </ClInclude>
     <ClInclude Include="include\Client.h">
       <Filter>Header Files\Networking</Filter>
     </ClInclude>
@@ -108,9 +102,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Rock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

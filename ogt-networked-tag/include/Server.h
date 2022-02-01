@@ -7,7 +7,6 @@
 #include <shared_mutex> // for shared_mutex
 
 #include "Network.h"
-#include "FileTransferData.h" // For FileTransferData class
 #include "PacketManager.h" // For PacketManager class
 
 class Connection
@@ -20,8 +19,6 @@ public:
 	}
 	SOCKET m_socket;
 
-	//file transfer data
-	FileTransferData m_file; // Object that contains information about our file that is being sent to the client from this server
 	PacketManager m_pm; // Packet Manager for outgoing data for this connection
 	int m_ID = 0;
 

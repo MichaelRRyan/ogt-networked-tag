@@ -5,17 +5,11 @@ Game::Game() :
 	m_exitGame{ false },
 	m_localId{ 100 }
 {
-	if (!m_terrainTexture.loadFromFile("ASSETS\\IMAGES\\terrain_atlas.png"))
-	{
-		// Error loading file
-	}
-	m_tileSprite.setTexture(m_terrainTexture);
+	if (m_terrainTexture.loadFromFile("ASSETS\\IMAGES\\terrain_atlas.png"))
+		m_tileSprite.setTexture(m_terrainTexture);
 
-	if (!m_hudIconsTexure.loadFromFile("ASSETS\\IMAGES\\hud_icons.png"))
-	{
-		// Error loading file
-	}
-	m_hudIcons.setTexture(m_hudIconsTexure);
+	if (m_hudIconsTexure.loadFromFile("ASSETS\\IMAGES\\hud_icons.png"))
+		m_hudIcons.setTexture(m_hudIconsTexure);
 
 	setUpGame();
 	setUpFontAndText();
