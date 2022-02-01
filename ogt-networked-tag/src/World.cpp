@@ -58,6 +58,11 @@ Player* World::getPlayer(char t_id)
 		return nullptr;
 }
 
+std::map<char, Player*>& World::getPlayers()
+{
+	return m_players;
+}
+
 void World::setupMaze()
 {
 	int mazeSetup[MAX_ROWS][MAX_COLS]{ // Setup a temporary 2D maze to setup the main maze

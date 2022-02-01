@@ -19,6 +19,8 @@ public:
 	void createPlayer(char t_id, sf::Vector2i const & t_tilePos);
 	Player * getPlayer(char t_id);
 
+	std::map<char, Player *> & getPlayers();
+
 private:
 
 	void setupMaze();

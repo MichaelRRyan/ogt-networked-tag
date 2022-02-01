@@ -5,7 +5,6 @@
 #include <string>
 #include <functional>
 
-#include "Network.h"
 #include "PacketManager.h"
 
 class Network
