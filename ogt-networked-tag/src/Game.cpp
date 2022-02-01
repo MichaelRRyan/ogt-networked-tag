@@ -55,8 +55,6 @@ void Game::startServer()
 	m_server->setPacketRecievedCallback([&](PacketType type, std::string message)
 		{ packetRecieved(type, message); });
 
-	m_server->setWorldInterface(&m_world);
-
 	m_world.createPlayer(m_server->getLocalId(), { 7, 2 });
 	std::cout << "Joining..." << std::endl;
 }
@@ -211,6 +209,22 @@ void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 {
 	switch (t_packetType)
 	{
+	case PacketType::RequestToMove:
+		if (t_string.size() == 3)
+		{
+			char id = t_string.at(0);
+			int tileX = static_cast<int>(t_string.at(1));
+			int tileY = static_cast<int>(t_string.at(2));
+
+			Player * player = m_world.getPlayer(id);
+
+			if (player && m_world.isTileEmpty(tileX, tileY))
+			{
+				m_server->setPlayerPosition(id, tileX, tileY);
+				player->setPos({ tileX, tileY });
+				std::cout << "Moving player id " << (int)id << "..." << std::endl;
+			}
+		}
 	case PacketType::GameStarted:
 		break;
 	case PacketType::GameEnded:

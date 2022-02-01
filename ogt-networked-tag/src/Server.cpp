@@ -77,11 +77,6 @@ char Server::getLocalId() const
 	return 0;
 }
 
-void Server::setWorldInterface(WorldInterface * t_world)
-{
-	m_world = t_world;
-}
-
 void Server::NewConnectionThread(Server & server)
 {
 	while (!server.m_terminateThreads)
@@ -153,34 +148,14 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 		if (!getString(connection->m_socket, message))
 			return false;
 
-		int x = message.at(0);
-		int y = message.at(1);
+		// Adds the ID to the start.
+		message = " " + message;
+		message.at(0) = connection->m_ID;
 
-		if (m_world && m_world->isTileEmpty(x, y))
-		{
-			// Adds the ID to the start.
-			message = " " + message;
-			message.at(0) = connection->m_ID;
+		// Notifies the game of the move request.
+		m_packetRecievedCallback(PacketType::RequestToMove, message);
 
-			std::shared_ptr<Packet> p = std::make_shared<Packet>();
-			p->Append(PacketType::MovePlayer);
-			p->Append(message.size());
-			p->Append(message);
-
-			// Notifies the game of the new position move.
-			m_packetRecievedCallback(PacketType::MovePlayer, message);
-
-			{
-				std::shared_lock<std::shared_mutex> lock(m_mutex_connectionMgr);
-				for (auto conn : m_connections) //For each connection...
-				{
-					//if (conn == connection) //If connection is the user who sent the message...
-					//	continue;//Skip to the next user since there is no purpose in sending the message back to the user who sent it.
-					conn->m_pm.Append(p);
-				}
-			}
-		}
-		std::cout << "Processed player position packet from user ID: " << connection->m_ID << std::endl;
+		std::cout << "Processed move request packet from user ID: " << connection->m_ID << std::endl;
 		break;
 	}
 	default: //If packet type is not accounted for

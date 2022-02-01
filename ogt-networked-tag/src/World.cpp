@@ -64,6 +64,11 @@ std::map<char, Player*>& World::getPlayers()
 	return m_players;
 }
 
+Tile World::getTileType(int t_x, int t_y) const
+{
+	return m_maze[t_y][t_x].getTileType();
+}
+
 bool World::isTileEmpty(int t_x, int t_y) const
 {
 	return m_maze[t_y][t_x].getTileType() == Tile::None;

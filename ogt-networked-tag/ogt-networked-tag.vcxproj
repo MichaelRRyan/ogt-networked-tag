@@ -167,7 +167,6 @@
     <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\Player.h" />
     <ClInclude Include="include\World.h" />
-    <ClInclude Include="include\WorldInterface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

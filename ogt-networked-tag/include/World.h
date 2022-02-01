@@ -3,11 +3,10 @@
 
 #include <iostream>
 
-#include "WorldInterface.h"
 #include "Cell.h"
 #include "Player.h"
 
-class World : public WorldInterface
+class World
 {
 public:
 
@@ -22,7 +21,8 @@ public:
 
 	std::map<char, Player *> & getPlayers();
 
-	virtual bool isTileEmpty(int t_x, int t_y) const override;
+	Tile getTileType(int t_x, int t_y) const;
+	bool isTileEmpty(int t_x, int t_y) const;
 
 private:
 
