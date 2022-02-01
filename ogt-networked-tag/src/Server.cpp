@@ -110,6 +110,9 @@ void Server::NewConnectionThread(Server & server)
 			p->Append(info);
 			newConnection->m_pm.Append(p);
 
+			// Notifies the game of the new player.
+			server.m_packetRecievedCallback(PacketType::PlayerJoined, info);
+
 			// Sends all the other clients info on the new player.
 			p = std::make_shared<Packet>();
 			p->Append(PacketType::PlayerJoined);
@@ -153,6 +156,9 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 		p->Append(PacketType::MovePlayer);
 		p->Append(message.size());
 		p->Append(message);
+
+		// Notifies the game of the new position move.
+		m_packetRecievedCallback(PacketType::MovePlayer, message);
 
 		{
 			std::shared_lock<std::shared_mutex> lock(m_mutex_connectionMgr);
