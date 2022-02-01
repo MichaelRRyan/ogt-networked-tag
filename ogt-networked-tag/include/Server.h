@@ -32,6 +32,7 @@ public:
 	~Server();
 
 	void setPlayerPosition(char id, int x, int y);
+	virtual char getLocalId() const override;
 
 private:
 

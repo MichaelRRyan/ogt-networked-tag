@@ -71,6 +71,12 @@ void Server::setPlayerPosition(char id, int x, int y)
 		conn->m_pm.Append(p);
 }
 
+char Server::getLocalId() const
+{
+	// The server is always ID zero.
+	return 0;
+}
+
 void Server::NewConnectionThread(Server & server)
 {
 	while (!server.m_terminateThreads)

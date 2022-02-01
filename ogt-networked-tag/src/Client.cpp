@@ -4,7 +4,8 @@
 #include <iostream> //for std::cout
 #include "PacketStructs.h"
 
-Client::Client(const char* ip, const int port)
+Client::Client(const char* ip, const int port) :
+	m_localId{ m_UNASSIGNED_ID } 
 {
 	//Winsock Startup
 	WSAData wsaData;
@@ -63,12 +64,21 @@ Client::~Client()
 
 bool Client::ProcessPacketType(PacketType packetType)
 {
+	std::string message;
+	if (!getString(m_connection, message))
+		return false;
+
+	if (PacketType::JoinInfo == packetType)
+		m_localId = message.at(0);
+
+	m_packetRecievedCallback(packetType, message);
+
 	/*
 	MovePlayer,
 	PlayerDied,
 	RockMoved,
 	*/
-	switch (packetType)
+	/*switch (packetType)
 	{
 	case PacketType::GameStarted:
 	case PacketType::GameEnded:
@@ -84,7 +94,7 @@ bool Client::ProcessPacketType(PacketType packetType)
 
 		m_packetRecievedCallback(packetType, message);
 		break;
-	}
+	}*/
 	//case PacketType::PlayerPosition: //If PacketType is a PlayerPosition
 	//{
 	//	std::string Message; //string to store our message we received
@@ -96,10 +106,10 @@ bool Client::ProcessPacketType(PacketType packetType)
 
 	//	break;
 	//}
-	default: //If PacketType type is not accounted for
-		std::cout << "Unrecognized PacketType: " << (std::int32_t)packetType << std::endl; //Display that PacketType was not found
-		break;
-	}
+	//default: //If PacketType type is not accounted for
+	//	std::cout << "Unrecognized PacketType: " << (std::int32_t)packetType << std::endl; //Display that PacketType was not found
+	//	break;
+	//}
 	return true;
 }
 
@@ -133,6 +143,11 @@ void Client::requestToMove(int t_x, int t_y)
 	message += static_cast<char>(t_x);
 	message += static_cast<char>(t_y);
 	sendString(m_pm, PacketType::RequestToMove, message);
+}
+
+char Client::getLocalId() const
+{
+	return m_localId;
 }
 
 void Client::PacketSenderThread(Client & client) //Thread for all outgoing packets

@@ -152,6 +152,7 @@
     <ClCompile Include="src\Server.cpp" />
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\Rock.cpp" />
+    <ClCompile Include="src\World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Cell.h" />
@@ -165,6 +166,7 @@
     <ClInclude Include="include\Server.h" />
     <ClInclude Include="include\Globals.h" />
     <ClInclude Include="include\Player.h" />
+    <ClInclude Include="include\World.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

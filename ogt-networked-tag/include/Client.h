@@ -15,6 +15,8 @@ public: // Public functions
 	void Disconnect();
 	void requestToMove(int t_x, int t_y);
 
+	virtual char getLocalId() const override;
+
 	~Client();
 
 private: //Private functions
@@ -34,5 +36,8 @@ private: //Private variables
 
 	std::thread m_pst; //Create thread to send packets
 	std::thread m_ct; //Create thread to listen to server
+
+	// The id of this client, assigned by the server.
+	char m_localId;
 
 };
