@@ -99,7 +99,7 @@ void Game::processEvents()
 			if (id != m_network->m_UNASSIGNED_ID)
 			{
 				Player * localPlayer = m_world.getPlayer(id);
-				sf::Vector2i pos = localPlayer->getPos();
+				sf::Vector2i pos = localPlayer->getTilePosition();
 				sf::Vector2i newPos = pos;
 
 				if (nextEvent.key.code == sf::Keyboard::Left)
@@ -126,7 +126,7 @@ void Game::processEvents()
 					else if (m_world.isTileEmpty(newPos.x, newPos.y))
 					{
 						m_server->setPlayerPosition(id, newPos.x, newPos.y);
-						localPlayer->setPos({ newPos.x, newPos.y });
+						localPlayer->setTilePosition({ newPos.x, newPos.y });
 					}
 				}
 			}
@@ -221,7 +221,7 @@ void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 			if (player && m_world.isTileEmpty(tileX, tileY))
 			{
 				m_server->setPlayerPosition(id, tileX, tileY);
-				player->setPos({ tileX, tileY });
+				player->setTilePosition({ tileX, tileY });
 				std::cout << "Moving player id " << (int)id << "..." << std::endl;
 			}
 		}
@@ -258,7 +258,7 @@ void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 			{
 				int newTileX = static_cast<int>(t_string.at(1));
 				int newTileY = static_cast<int>(t_string.at(2));
-				player->setPos({ newTileX, newTileY });
+				player->setTilePosition({ newTileX, newTileY });
 				std::cout << "Moving player..." << std::endl;
 			}
 		}

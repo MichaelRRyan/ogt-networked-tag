@@ -47,7 +47,7 @@ void World::draw(sf::RenderWindow & t_window)
 void World::createPlayer(char t_id, sf::Vector2i const& t_tilePos)
 {
 	m_players[t_id] = new Player();
-	m_players[t_id]->setPos(t_tilePos);
+	m_players[t_id]->setTilePosition(t_tilePos);
 	m_players[t_id]->setCharacter((int)t_id);
 }
 
