@@ -50,7 +50,7 @@ void Player::respawn()
 	m_body.setColor(sf::Color::White);
 	m_body.setOrigin(0.0f, m_body.getOrigin().y);
 	m_body.setScale(1.0f, 1.0f);
-	setPos(sf::Vector2i{ 12,2 });
+	setTilePosition(sf::Vector2i{ 12,2 });
 
 }
 
@@ -60,7 +60,7 @@ void Player::draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const
 	t_target.draw(m_playerName, t_states);
 }
 
-void Player::setPos(sf::Vector2i t_pos)
+void Player::setTilePosition(sf::Vector2i t_pos)
 {
 	m_pos = t_pos;
 	m_previousPos = t_pos;
@@ -149,7 +149,7 @@ void Player::update(Cell t_maze[][MAX_COLS])
 
 	m_rock.update(t_maze);
 
-	if (t_maze[getPos().y][getPos().x].getTileType() == Tile::Moveable)
+	if (t_maze[m_pos.y][m_pos.x].getTileType() == Tile::Moveable)
 		if (m_lives > 0)
 			m_lives--;
 }

@@ -5,15 +5,18 @@
 #include <string>
 #include <functional>
 
-#include "Network.h"
 #include "PacketManager.h"
 
 class Network
 {
 public:
 
+	const char m_UNASSIGNED_ID = 100;
+
 	using PacketRecievedCallback = std::function<void(PacketType, std::string)>;
 	void setPacketRecievedCallback(PacketRecievedCallback t_callback);
+
+	virtual char getLocalId() const = 0;
 
 protected:
 

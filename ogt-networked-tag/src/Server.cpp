@@ -71,6 +71,12 @@ void Server::setPlayerPosition(char id, int x, int y)
 		conn->m_pm.Append(p);
 }
 
+char Server::getLocalId() const
+{
+	// The server is always ID zero.
+	return 0;
+}
+
 void Server::NewConnectionThread(Server & server)
 {
 	while (!server.m_terminateThreads)
@@ -93,7 +99,7 @@ void Server::NewConnectionThread(Server & server)
 			CHT.detach();
 			server.m_threads.push_back(&CHT);
 
-			// Sends the new client their ID.
+			// Sends the new client their ID and setup info.
 			std::string info{ "" };
 			info += static_cast<char>(newConnection->m_ID); // ID
 			info += static_cast<char>(7 + newConnection->m_ID); // Tile x
@@ -104,18 +110,30 @@ void Server::NewConnectionThread(Server & server)
 			p->Append(info);
 			newConnection->m_pm.Append(p);
 
-			std::shared_ptr<Packet> p2 = std::make_shared<Packet>();
-			p2->Append(PacketType::PlayerJoined);
-			p2->Append(info.size());
-			p2->Append(info);
+			// Notifies the game of the new player.
+			server.m_packetRecievedCallback(PacketType::PlayerJoined, info);
+
+			// Sends all the other clients info on the new player.
+			p = std::make_shared<Packet>();
+			p->Append(PacketType::PlayerJoined);
+			p->Append(info.size());
+			p->Append(info);
 			
 			// Updates all other players of the new joiner.
 			for (auto conn : server.m_connections) //For each connection...
 			{
 				if (conn == newConnection) //If connection is the user who sent the message...
 					continue;//Skip to the next user since there is no purpose in sending the message back to the user who sent it.
-				conn->m_pm.Append(p2);
+				conn->m_pm.Append(p);
+
+				// Sends the new player the current already existing players.
+				newConnection->m_pm.Append(PS::PlayerJoined(
+					static_cast<char>(conn->m_ID), 7 + conn->m_ID, 2).toPacket());
 			}
+
+			// Sends the new player the server's player.
+			newConnection->m_pm.Append(PS::PlayerJoined(
+				static_cast<char>(0), 7, 2).toPacket());
 		}
 	}
 }
@@ -128,72 +146,16 @@ bool Server::ProcessPacket(std::shared_ptr<Connection> connection, PacketType pa
 	{
 		std::string message; 
 		if (!getString(connection->m_socket, message))
-			return false; 
+			return false;
 
 		// Adds the ID to the start.
 		message = " " + message;
 		message.at(0) = connection->m_ID;
 
-		std::shared_ptr<Packet> p = std::make_shared<Packet>();
-		p->Append(PacketType::MovePlayer);
-		p->Append(message.size());
-		p->Append(message);
+		// Notifies the game of the move request.
+		m_packetRecievedCallback(PacketType::RequestToMove, message);
 
-		{
-			std::shared_lock<std::shared_mutex> lock(m_mutex_connectionMgr);
-			for (auto conn : m_connections) //For each connection...
-			{
-				//if (conn == connection) //If connection is the user who sent the message...
-				//	continue;//Skip to the next user since there is no purpose in sending the message back to the user who sent it.
-				conn->m_pm.Append(p);
-			}
-		}
-		std::cout << "Processed player position packet from user ID: " << connection->m_ID << std::endl;
-		break;
-	}
-	case PacketType::ChatMessage: //Packet Type: chat message
-	{
-		std::string message; //string to store our message we received
-		if (!getString(connection->m_socket, message)) //Get the chat message and store it in variable: Message
-			return false; //If we do not properly get the chat message, return false
-						  //Next we need to send the message out to each user
-
-		PS::ChatMessage cm(message);
-		std::shared_ptr<Packet> msgPacket = std::make_shared<Packet>(cm.toPacket()); //use shared_ptr instead of sending with SendString so we don't have to reallocate packet for each connection
-		{
-			std::shared_lock<std::shared_mutex> lock(m_mutex_connectionMgr);
-			for (auto conn : m_connections) //For each connection...
-			{
-				if (conn == connection) //If connection is the user who sent the message...
-					continue;//Skip to the next user since there is no purpose in sending the message back to the user who sent it.
-				conn->m_pm.Append(msgPacket);
-			}
-		}
-		std::cout << "Processed chat message packet from user ID: " << connection->m_ID << std::endl;
-		break;
-	}
-	case PacketType::FileTransferRequestFile:
-	{
-		std::string fileName; //string to store file name
-		if (!getString(connection->m_socket, fileName)) //If issue getting file name
-			return false; //Failure to process packet
-		std::string errMsg;
-		if (connection->m_file.Initialize(fileName, errMsg)) //if filetransferdata successfully initialized
-		{
-			connection->m_pm.Append(connection->m_file.getOutgoingBufferPacket()); //Send first buffer from file
-		}
-		else //If initialization failed, send error message
-		{
-			sendString(connection->m_pm, PacketType::ChatMessage, errMsg);
-		}
-		break;
-	}
-	case PacketType::FileTransferRequestNextBuffer:
-	{
-		if (connection->m_file.m_transferInProgress)
-		{
-			connection->m_pm.Append(connection->m_file.getOutgoingBufferPacket()); //get and send next buffer for file
-		}
+		std::cout << "Processed move request packet from user ID: " << connection->m_ID << std::endl;
 		break;
 	}
 	default: //If packet type is not accounted for

@@ -2,24 +2,14 @@
 
 Game::Game() :
 	m_window{ sf::VideoMode{ WINDOW_WIDTH, WINDOW_HEIGHT, 32u }, "OGT Game" },
-	m_exitGame{ false },
-	m_localId{ 100 }
+	m_network{ nullptr },
+	m_exitGame{ false }
 {
-	if (!m_terrainTexture.loadFromFile("ASSETS\\IMAGES\\terrain_atlas.png"))
-	{
-		// Error loading file
-	}
-	m_tileSprite.setTexture(m_terrainTexture);
-
-	if (!m_hudIconsTexure.loadFromFile("ASSETS\\IMAGES\\hud_icons.png"))
-	{
-		// Error loading file
-	}
-	m_hudIcons.setTexture(m_hudIconsTexure);
+	if (m_hudIconsTexure.loadFromFile("ASSETS\\IMAGES\\hud_icons.png"))
+		m_hudIcons.setTexture(m_hudIconsTexure);
 
 	setUpGame();
 	setUpFontAndText();
-	//m_player.setCharName("Jeff");
 }
 
 Game::~Game()
@@ -47,26 +37,37 @@ void Game::run()
 		}
 		render();
 	}
-
 }
 
 void Game::startServer()
 {
+	if (m_network != nullptr)
+	{
+		std::cout << "WARNING: A server can't be created as there is already a "
+			<< "network instance running." << std::endl;
+		return;
+	}
+
 	// Creates a server on port 1111, false=do not loopback to localhost (others can connect).
 	m_server = new Server(1111, false);
+	m_network = m_server;
 
 	m_server->setPacketRecievedCallback([&](PacketType type, std::string message)
 		{ packetRecieved(type, message); });
 
-	char id = 0;
-	m_localId = id;
-	m_players[id].setPos({ 7, 2 });
-	m_players[id].setCharacter((int)id);
+	m_world.createPlayer(m_server->getLocalId(), { 7, 2 });
 	std::cout << "Joining..." << std::endl;
 }
 
 bool Game::startClient(std::string const& t_ip)
 {
+	if (m_network != nullptr)
+	{
+		std::cout << "WARNING: A client can't be created as there is already a "
+			<< "network instance running." << std::endl;
+		return false;
+	}
+
 	// Create client to connect to a server on port 1111.
 	m_client = new Client(t_ip.c_str(), 1111);
 
@@ -75,6 +76,8 @@ bool Game::startClient(std::string const& t_ip)
 
 	if (!m_client->Connect()) //If client fails to connect...
 		return false;
+
+	m_network = m_client;
 
 	return true;
 }
@@ -90,11 +93,13 @@ void Game::processEvents()
 		}
 		else if (sf::Event::KeyPressed == nextEvent.type)
 		{
+			char id = m_network->getLocalId();
+
 			// If an id has been set.
-			if (m_localId != 100)
+			if (id != m_network->m_UNASSIGNED_ID)
 			{
-				
-				sf::Vector2i pos = m_players[m_localId].getPos();
+				Player * localPlayer = m_world.getPlayer(id);
+				sf::Vector2i pos = localPlayer->getTilePosition();
 				sf::Vector2i newPos = pos;
 
 				if (nextEvent.key.code == sf::Keyboard::Left)
@@ -118,10 +123,10 @@ void Game::processEvents()
 				{
 					if (m_client)
 						m_client->requestToMove(newPos.x, newPos.y);
-					else
+					else if (m_world.isTileEmpty(newPos.x, newPos.y))
 					{
-						m_server->setPlayerPosition(m_localId, newPos.x, newPos.y);
-						m_players[m_localId].setPos({ newPos.x, newPos.y });
+						m_server->setPlayerPosition(id, newPos.x, newPos.y);
+						localPlayer->setTilePosition({ newPos.x, newPos.y });
 					}
 				}
 			}
@@ -136,80 +141,37 @@ void Game::update(sf::Time t_deltaTime)
 		m_window.close();
 	}
 
-	// If the local id is set.
-	if (m_localId != 100)
-	{
-		m_scoreText.setString(std::to_string(m_players[m_localId].getScore()));
-		m_livesText.setString(std::to_string(m_players[m_localId].getLives()));
-	}
+	m_world.update();
 
-	for (auto & playerPair : m_players)
-		playerPair.second.update(m_maze);
+	// If the local id is set.
+	if (m_network)
+	{
+		char id = m_network->getLocalId();
+		if (id != m_network->m_UNASSIGNED_ID)
+		{
+			Player* localPlayer = m_world.getPlayer(id);
+			if (localPlayer)
+			{
+				m_scoreText.setString(std::to_string(localPlayer->getScore()));
+				m_livesText.setString(std::to_string(localPlayer->getLives()));
+			}
+		}
+	}
 }
 
 void Game::render()
 {
 	m_window.clear();
-
+	m_world.draw(m_window);
 	drawGameplay();
-
-	for (auto& playerPair : m_players)
-		m_window.draw(playerPair.second);
-	
-
 	m_window.display();
 }
 
 void Game::setUpGame()
 {
-	setUpMaze();
+	//setUpMaze();
 	//m_player.respawn();
-	m_maze[2][12].setTileType(Tile::None);
-}
-
-void Game::setUpMaze()
-{
-	int mazeSetup[MAX_ROWS][MAX_COLS]{ // Setup a temporary 2D maze to setup the main maze
-	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-	{ 0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0 },
-	{ 0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0 },
-	{ 0,0,1,1,0,1,1,0,0,1,1,0,0,1,1,1,0,0,1,1,0,1,1,0,0 },
-	{ 0,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0 },
-	{ 0,1,1,1,0,0,0,0,0,1,1,1,1,0,0,1,0,0,0,0,0,1,1,1,0 },
-	{ 0,1,1,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1,1,1,0 },
-	{ 0,0,0,0,0,1,0,0,1,1,1,1,1,3,1,3,1,0,0,1,0,0,0,0,0 },
-	{ 0,0,1,1,0,1,0,0,1,1,1,1,0,0,0,0,1,0,0,1,0,1,1,0,0 },
-	{ 0,0,1,1,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0 },
-	{ 0,0,1,1,0,1,0,0,1,1,0,1,1,1,0,0,0,0,0,1,0,1,1,0,0 },
-	{ 0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0 },
-	{ 0,0,1,1,0,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1,1,0,0 },
-	{ 0,0,1,1,0,1,0,0,0,0,1,1,1,0,0,1,1,0,0,1,0,1,1,0,0 },
-	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0 },
-	{ 0,0,1,1,0,1,0,0,1,0,0,0,0,1,1,1,1,0,0,1,0,1,1,0,0 },
-	{ 0,0,1,1,0,1,0,0,1,3,1,3,1,1,1,1,1,0,0,1,0,1,1,0,0 },
-	{ 0,0,1,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,1,1,0,0 },
-	{ 0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0 },
-	{ 0,3,1,1,1,0,0,0,0,1,0,0,1,1,1,1,0,0,0,0,1,1,1,3,0 },
-	{ 0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0 },
-	{ 0,0,1,1,0,1,1,0,0,1,1,1,0,0,1,1,0,0,1,1,0,1,1,0,0 },
-	{ 0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0 },
-	{ 0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0 },
-	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
-	};
-
-	for (int row = 0; row < MAX_ROWS; row++)
-	{
-		for (int col = 0; col < MAX_COLS; col++)
-		{
-			m_maze[row][col].setTileType(static_cast<Tile>(mazeSetup[row][col]));
-			if (mazeSetup[row][col] == 0)
-				m_maze[row][col].setTileType(Tile::Coin);
-
-			if (row == 0 || row == MAX_ROWS - 1 || col == 0 || col == MAX_COLS - 1)
-				m_maze[row][col].setTileType(Tile::Rock);
-		}
-	}
-
+	//m_maze[2][12].setTileType(Tile::None);
 }
 
 void Game::setUpFontAndText()
@@ -227,23 +189,6 @@ void Game::setUpFontAndText()
 
 void Game::drawGameplay()
 {
-	for (int row = 0; row < MAX_ROWS; row++)
-	{
-		for (int col = 0; col < MAX_COLS; col++)
-		{
-			m_tileSprite.setPosition(static_cast<float>(32 * col), static_cast<float>(32 * row));
-			int grassType = (col + row) % 3;
-			m_tileSprite.setTextureRect(sf::IntRect{ TILE_SIZE * (21 + grassType), TILE_SIZE * 5, TILE_SIZE, TILE_SIZE });
-			m_window.draw(m_tileSprite);
-
-			if (m_maze[row][col].getTileType() != Tile::None)
-			{
-				m_tileSprite.setTextureRect(m_maze[row][col].getTexturePosition());
-				m_window.draw(m_tileSprite);
-			}
-		}
-	}
-
 	m_hudIcons.setTextureRect({ 64, 0, 288, 32 });
 	m_hudIcons.setPosition(256.0f, 0.0f);
 	m_window.draw(m_hudIcons);
@@ -264,6 +209,22 @@ void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 {
 	switch (t_packetType)
 	{
+	case PacketType::RequestToMove:
+		if (t_string.size() == 3)
+		{
+			char id = t_string.at(0);
+			int tileX = static_cast<int>(t_string.at(1));
+			int tileY = static_cast<int>(t_string.at(2));
+
+			Player * player = m_world.getPlayer(id);
+
+			if (player && m_world.isTileEmpty(tileX, tileY))
+			{
+				m_server->setPlayerPosition(id, tileX, tileY);
+				player->setTilePosition({ tileX, tileY });
+				std::cout << "Moving player id " << (int)id << "..." << std::endl;
+			}
+		}
 	case PacketType::GameStarted:
 		break;
 	case PacketType::GameEnded:
@@ -274,9 +235,8 @@ void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 			char id = t_string.at(0);
 			int tileX = static_cast<int>(t_string.at(1));
 			int tileY = static_cast<int>(t_string.at(2));
-			m_localId = id;
-			m_players[id].setPos({ tileX, tileY });
-			m_players[id].setCharacter((int)id);
+			
+			m_world.createPlayer(id, { tileX, tileY });
 			std::cout << "Joining..." << std::endl;
 		}
 		break;
@@ -286,20 +246,21 @@ void Game::packetRecieved(PacketType t_packetType, std::string t_string)
 			char id = t_string.at(0);
 			int tileX = static_cast<int>(t_string.at(1));
 			int tileY = static_cast<int>(t_string.at(2));
-			m_players[id].setPos({ tileX, tileY });
-			m_players[id].setCharacter((int)id);
+			m_world.createPlayer(id, { tileX, tileY });
 			std::cout << "Setting up player..." << std::endl;
 		}
 		break;
 	case PacketType::MovePlayer:
 		if (t_string.size() == 3)
 		{
-			char id = t_string.at(0);
-			int newTileX = static_cast<int>(t_string.at(1));
-			int newTileY = static_cast<int>(t_string.at(2));
-			m_players[id].setPos({ newTileX, newTileY });
-
-			std::cout << "Moving player..." << std::endl;
+			Player * player = m_world.getPlayer(t_string.at(0));
+			if (player != nullptr)
+			{
+				int newTileX = static_cast<int>(t_string.at(1));
+				int newTileY = static_cast<int>(t_string.at(2));
+				player->setTilePosition({ newTileX, newTileY });
+				std::cout << "Moving player..." << std::endl;
+			}
 		}
 		break;
 	case PacketType::PlayerDied:

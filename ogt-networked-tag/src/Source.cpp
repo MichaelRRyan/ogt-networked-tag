@@ -37,16 +37,26 @@ int main()
 	if (num != 1 && num != 2)
 		return EXIT_FAILURE;
 
-	Game game; // Create a game class
+	Game * game = nullptr; // Create a game class
 
 	if (num == 1)
 	{
-		game.startServer();
+		game = new Game();
+		game->startServer();
 	}
 	else if (num == 2)
 	{
+		std::string ip;
+		std::cout << "Enter an IP or enter '1' to use local host: ";
+		std::cin >> ip;
+
+		if (ip == "1")
+			ip = "127.0.0.1";
+
+		game = new Game();
+
 		// Starts the client, breaks out if it fails.
-		if (!game.startClient("127.0.0.1"))
+		if (!game->startClient(ip))
 		{
 			std::cout << "Failed to connect to server..." << std::endl;
 			system("pause");
@@ -54,7 +64,11 @@ int main()
 		}
 	}
 
-	game.run(); // Run the game class
-
+	if (game)
+	{
+		game->run(); // Run the game class
+		delete game;
+	}
+	
 	return EXIT_SUCCESS;
 }
